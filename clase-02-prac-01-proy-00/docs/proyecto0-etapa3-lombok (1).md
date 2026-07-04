@@ -269,6 +269,114 @@ No lo necesitás ahora, pero anotalo: las annotations son **componibles** y perm
 
 ---
 
+## 📎 Paso 6.5: Notas de repaso (Lombok en profundidad)
+
+> Estas tres cosas complementan lo anterior. Las agrupo acá para que al releer la etapa tengas todo junto.
+
+### A) Lombok en el `pom.xml`: proyecto suelto vs multi-módulo
+
+Arriba, el Paso 1 mostró Lombok con `<version>` y `<scope>provided</scope>` — eso es para un **proyecto Java suelto**. Pero si tu proyecto vive en un **repo multi-módulo** (con un pom padre que hereda de Spring Boot), la forma cambia:
+
+**Proyecto suelto (lo del Paso 1):**
+```xml
+<dependency>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <version>1.18.34</version>
+    <scope>provided</scope>
+</dependency>
+```
+
+**En un módulo de repo Spring Boot** (Lombok heredado del padre): **no declarás nada** — el padre ya lo trae. Y si lo declarás explícitamente, la convención Spring es:
+```xml
+<dependency>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <optional>true</optional>          <!-- sin version, sin provided -->
+</dependency>
+```
+
+**Las tres diferencias:**
+- **Sin `<version>`** → la define Spring Boot (el parent la gestiona).
+- **`<optional>true</optional>` en vez de `<scope>provided</scope>`** → ambas logran que Lombok no se propague/empaquete, pero `optional` es la convención de Spring Boot y `provided` la de Java puro. Las dos funcionan para Lombok.
+- Si el módulo hereda Lombok del padre, **ni siquiera lo declarás** en el módulo.
+
+> **Regla mental:** proyecto suelto → `version` + `provided`. Módulo Spring que hereda → nada (o `optional` sin version si lo declarás). No mezcles las dos formas.
+
+### B) `@RequiredArgsConstructor` y el juego de constructores
+
+`@Data` incluye un `@RequiredArgsConstructor`: un constructor con los campos **obligatorios** (los `final` **y** los `@NonNull`). Pero hay un detalle clave al combinar constructores:
+
+**Si ponés `@AllArgsConstructor` y/o `@NoArgsConstructor` explícitos, el constructor de "required" que traía `@Data` DESAPARECE.** Lombok no genera el implícito cuando declarás otros. Por eso, si querés los tres, tenés que pedir el de required a mano:
+
+```java
+@Data
+@NoArgsConstructor          // → Pais()
+@RequiredArgsConstructor    // → Pais(nombre, capital)  [solo @NonNull / final]
+@AllArgsConstructor         // → Pais(nombre, capital, region, poblacion, ...)
+public class Pais {
+    @NonNull private String nombre;
+    @NonNull private String capital;
+    private String region;
+    private long poblacion;
+}
+```
+
+| Annotations | Constructores que obtenés |
+|---|---|
+| `@Data` solo | el de required (`@NonNull`/final) |
+| `@Data` + `@AllArgsConstructor` + `@NoArgsConstructor` | vacío + todos (**se pierde** el de required) |
+| Los tres + `@RequiredArgsConstructor` | vacío + required + todos |
+
+**Si querés un constructor con una combinación específica** (ni "solo required" ni "todos"), escribilo a mano — Lombok lo respeta y convive con los suyos:
+```java
+public Pais(String nombre, String capital, String region) {
+    this.nombre = nombre;
+    this.capital = capital;
+    this.region = region;
+}
+```
+
+> Recordá: `@NonNull` no es decorativo. Genera un chequeo de null en el constructor y el setter de ese campo → si le pasás null, explota al instante con un mensaje claro. Lo ponés en los campos que un objeto **no puede** tener vacíos (ej: nombre, capital).
+
+### C) `@Builder` — creación "por pasos nombrados"
+
+`@Builder` genera una forma de crear objetos nombrando cada campo, en vez del constructor posicional.
+
+**El problema que resuelve:** con muchos campos, el constructor posicional es ilegible y propenso a errores de orden:
+```java
+new Pais("Argentina", "Buenos Aires", "Americas", 45000000);  // ¿cuál era cuál?
+```
+
+**Con `@Builder`:**
+```java
+Pais p = Pais.builder()
+    .nombre("Argentina")
+    .capital("Buenos Aires")
+    .region("Americas")
+    .poblacion(45000000)
+    .build();          // ← el build() arma el objeto
+```
+
+Cada campo etiquetado, en cualquier orden, y podés omitir los que no te interesan.
+
+**Cómo se usa:** ponés `@Builder` sobre la clase, y creás con `Clase.builder().campo(x).campo(y).build()`.
+
+**Cuándo conviene:** clases con muchos campos (5+) o con varios opcionales. Para 2-3 campos no vale la pena.
+
+**Detalle al combinar:** `@Builder` a veces necesita `@AllArgsConstructor` al lado (el builder usa el constructor completo por detrás). Si combinás `@Builder` con `@NoArgsConstructor` y tira error, agregá `@AllArgsConstructor`:
+```java
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor    // ← el builder lo necesita por detrás
+public class Pais { ... }
+```
+
+> **En tu cursada, el patrón Builder quedó pendiente** de darse formalmente (el profe lo intercambió por otro tema). Pero aparece en código, así que tenerlo visto acá te deja leerlo y usarlo sin problema. Cuando lo den como patrón de diseño, vas a ver que `@Builder` de Lombok es su versión automática.
+
+---
+
 ## 🧪 Ejercicios
 
 ### Ejercicio 1: Quitar `@Data` y poner solo `@Getter`
@@ -359,6 +467,10 @@ Ahora **sabés exactamente qué código tenés en tu clase** aunque no lo escrib
 4. Si descompilás el `.class` generado, ¿qué vas a ver?
 5. ¿Por qué frameworks como Jackson siguen funcionando con clases Lombok aunque no escribas getters manuales?
 6. ¿Qué pasa con tu `.jar` final cuando deployás — Lombok va adentro?
+7. En un módulo Spring que hereda Lombok del padre, ¿qué declarás en el pom del módulo? ¿Y en un proyecto suelto?
+8. Si tenés `@Data + @AllArgsConstructor + @NoArgsConstructor`, ¿tenés el constructor de solo los `@NonNull`? ¿Cómo lo conseguís?
+9. ¿Qué hace `@NonNull` sobre un campo?
+10. ¿Qué ventaja da `@Builder` sobre el constructor posicional, y cuándo conviene?
 
 ---
 
