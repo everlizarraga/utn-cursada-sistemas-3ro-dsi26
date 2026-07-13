@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -89,6 +90,19 @@ public class CatalogoPaises {
     return this.paises.stream()
         .filter(p -> nombre.equals(p.getNombre()))
         .findFirst();
+  }
+
+  public Pais buscarPorNombreObligatorio(String nombre) {
+    /*if (nombre == null) {
+      throw new IllegalArgumentException("El nombre no puede ser null");
+    }*/
+    Objects.requireNonNull(nombre, "El nombre no puede ser null");
+    if (nombre.isBlank()) {
+      throw new IllegalArgumentException("El nombre no puede estar vacío");
+    }
+    return this.buscarPorNombre(nombre)
+        //.orElseThrow(() -> new RuntimeException("País no encontrado: " + nombre));
+        .orElseThrow(() -> new PaisNoEncontradoException(nombre));
   }
 
   public Optional<Pais> buscarPorCapital(String capital) {

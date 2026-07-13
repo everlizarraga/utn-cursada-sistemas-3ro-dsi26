@@ -1,6 +1,7 @@
 package io.github.everlizarraga.clase02prac01proy00;
 
 import io.github.everlizarraga.clase02prac01proy00.catalogo.CatalogoPaises;
+import io.github.everlizarraga.clase02prac01proy00.catalogo.PaisNoEncontradoException;
 import io.github.everlizarraga.clase02prac01proy00.modelo.Pais;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
@@ -126,6 +128,31 @@ class Clase02Prac01Proy00ApplicationTests {
   @DisplayName("2. Todos los paises listados deberian existir en el catalogo")
   void todosEstosPaisesExistenEnElCatalogo(String nombre) {
     assertThat(catalogo.buscarPorNombre(nombre)).isPresent();
+  }
+
+  /////////////////////////////////////
+
+  @Test
+  @DisplayName("EXCEPTION: Lanzar PaisNoEncontradoException por nombre desconocido")
+  void buscarPorNombreObligatorio_paisInexistente_lanzaExcepcion() {
+    assertThatThrownBy(() -> catalogo.buscarPorNombreObligatorio("Atlantis"))
+        .isInstanceOf(PaisNoEncontradoException.class)
+        .hasMessageContaining("Atlantis");
+  }
+
+  @Test
+  @DisplayName("EXCEPTION: Lanzar NullPointerException por busqueda con null")
+  void buscarPorNombreObligatorio_null_lanzaIllegalArgument() {
+    assertThatThrownBy(() -> catalogo.buscarPorNombreObligatorio(null))
+        .isInstanceOf(NullPointerException.class);
+  }
+
+  @Test
+  @DisplayName("EXCEPTION: Lanzar IllegalArgumentException por nombre sin caracteres")
+  void buscarPorNombreObligatorio_vacio_lanzaIllegalArgument() {
+    assertThatThrownBy(() -> catalogo.buscarPorNombreObligatorio(""))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("vacío");
   }
 
 }
