@@ -1,8 +1,11 @@
 package io.github.everlizarraga.clase02prac01proy00.catalogo;
 
+import io.github.everlizarraga.clase02prac01proy00.io.CargadorDePaisesDesdeCSV;
 import io.github.everlizarraga.clase02prac01proy00.modelo.DetalleMoneda;
 import io.github.everlizarraga.clase02prac01proy00.modelo.Pais;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -74,6 +77,12 @@ public class CatalogoPaises {
         Map.of("JPY", new DetalleMoneda("Japanese yen", "¥")),
         Map.of("jpn", "Japanese")
     ));
+  }
+
+  // Constructor nuevo — carga desde CSV
+  public CatalogoPaises(Path archivoCSV) throws IOException {
+    CargadorDePaisesDesdeCSV cargador = new CargadorDePaisesDesdeCSV();
+    this.paises = new ArrayList<>(cargador.cargarDesde(archivoCSV));
   }
 
   public List<Pais> getTodos() {
@@ -322,5 +331,8 @@ public class CatalogoPaises {
             )
         ));
   }
+
+  /////////////////////////////////////////
+
 
 }

@@ -8,6 +8,7 @@ import io.github.everlizarraga.clase02prac01proy00.etapas.Etapa04;
 import io.github.everlizarraga.clase02prac01proy00.etapas.Etapa05;
 import io.github.everlizarraga.clase02prac01proy00.etapas.Etapa06;
 import io.github.everlizarraga.clase02prac01proy00.etapas.Etapa08;
+import io.github.everlizarraga.clase02prac01proy00.etapas.Etapa09;
 import io.github.everlizarraga.clase02prac01proy00.modelo.Pais;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -29,7 +30,8 @@ public class Clase02Prac01Proy00Application {
     //new Etapa04().run();
     //new Etapa05().run();
     //new Etapa06().run();
-    new Etapa08().run();
+    //new Etapa08().run();
+    new Etapa09().run();
 
   }
 
