@@ -108,7 +108,16 @@ public class ProductoServiceImpl implements ProductoService {   //  service, con
 
 Esto — el framework alcanzándole a cada clase lo que su constructor declara — **es la inyección de dependencias de la lectura previa, ejecutándose**. Vos no vas a buscar tus dependencias ni las construís: las declarás, y te las inyectan. Por eso la lectura era prerrequisito de esta unidad: sin ese concepto, este código parece brujería; con él, es exactamente lo que esperabas ver.
 
-*(Esta es la forma de inyección que vas a usar — por constructor. Existen otras variantes; irán apareciendo cuando hagan falta.)*
+*(Esta es la forma de inyección que vas a usar siempre — por constructor.)*
+
+👀 **Otra forma que vas a ver — inyección por atributo:** en código ajeno (y en muchos tutoriales, sobre todo viejos) la dependencia aparece anotada directo sobre el campo, sin pasar por el constructor:
+
+```java
+@Autowired                                     // "Spring: llená este atributo vos"
+private ProductoRepository productoRepository;
+```
+
+Hace lo mismo — el framework inyecta igual — pero esconde las dependencias (el constructor ya no declara qué necesita la clase para vivir) y complica probarla fuera del framework; por eso la canónica es por constructor. Reconocela; no la produzcas. *(Existe una tercera, por setter, bastante menos común.)* De hecho la vas a ver funcionando en el test de integración del Punto 6, donde es la forma habitual y aceptada.
 
 ## 5. Interfaz + implementación: el par que se repite en todas las capas 🔴
 

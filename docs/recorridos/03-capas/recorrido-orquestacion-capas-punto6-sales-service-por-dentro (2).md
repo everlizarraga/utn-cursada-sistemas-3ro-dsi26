@@ -295,6 +295,10 @@ private ProductoResponse toResponse(Producto producto, Comercio comercio) {
 // ↑ Un "mapper": método que transforma la entidad en su DTO de salida,
 //   campo por campo. Vive en el service (podría extraerse a una clase
 //   ProductoMapper para un código aún más limpio — es válido también).
+//   👀 Otra forma que vas a ver — el mapper como clase propia: una clase
+//   ProductoMapper (inyectada como bean, o con métodos estáticos) que
+//   agrupa los toResponse/toEntity de esa entidad. Misma tarea, casa
+//   propia: la vas a encontrar en muchos proyectos de terceros.
 
 // Y en findAll() lo viste aplicado en masa:
 //     productoRepository.findAll().stream().map(this::toResponse).toList();
@@ -336,9 +340,15 @@ public class ProductoController {            //    endpoints de esta clase cuelg
         return productoService.findById(id);
     }
     // ↑ `{id}` en la ruta es una PARTE VARIABLE: /productos/1, /productos/150...
-    //   @PathVariable matchea ese pedacito de la ruta con el parámetro `id`
-    //   (matchean por nombre; si quisieras llamarlos distinto, se puede
-    //   indicar explícitamente). Spring te lo entrega ya convertido a Long.
+    //   @PathVariable matchea ese pedacito de la ruta con el parámetro `id` —
+    //   acá matchean solos porque SE LLAMAN IGUAL. Spring te lo entrega ya
+    //   convertido a Long.
+    //   👀 Otra forma que vas a ver — nombres distintos: si el parámetro no se
+    //   llama como la variable de ruta, se lo indicás a la anotación:
+    //       public ProductoResponse getById(@PathVariable("id") Long productoId)
+    //   = "este parámetro se llena con la parte {id} de la ruta". Equivalente
+    //   más verboso: @PathVariable(name = "id"). Con nombres coincidentes, la
+    //   forma pelada alcanza — por eso es la que más vas a encontrar.
 
     @PostMapping                                  // ⑥ POST /sales-service/productos
     @ResponseStatus(HttpStatus.CREATED)           //    si sale bien → 201 Created
@@ -349,6 +359,12 @@ public class ProductoController {            //    endpoints de esta clase cuelg
     //   instancia de ProductoCreateRequest". Los campos del JSON matchean
     //   por nombre con los del record. @ResponseStatus pisa el código de
     //   estado por defecto (que en los GET, sin decir nada, es 200 OK).
+    //   👀 Otra forma que vas a ver — nombres que no coinciden: si el JSON
+    //   trae "precio_base" (snake_case, típico en APIs ajenas) y tu campo
+    //   se llama precioBase, se anota el campo del DTO:
+    //       @JsonProperty("precio_base") double precioBase
+    //   = "este campo se llena con esa clave del JSON". Y vale en los dos
+    //   sentidos: también renombra la clave al serializar la salida.
 
     @PutMapping                                   // ⑦ PUT /sales-service/productos
     public ProductoResponse update(@RequestBody ProductoUpdateRequest request) {
@@ -382,6 +398,18 @@ public class ProductoController {            //    endpoints de esta clase cuelg
 // - ¿Y si dos rutas podrían matchear la misma petición? Cuidado con las
 //   colisiones: alguna va a ganar por especificidad — mejor diseñar rutas
 //   que no compitan.
+// - 👀 Otra forma que vas a ver — devolver ResponseEntity: métodos firmados
+//   ResponseEntity<ProductoResponse> que arman status + body a mano:
+//       return ResponseEntity.ok(dto);                          // 200 + body
+//       return ResponseEntity.status(HttpStatus.CREATED).body(dto);  // 201 + body
+//   Da control fino del código de estado según el camino de ejecución. Ya
+//   la tenés funcionando en este proyecto: el build(...) del manejador
+//   global de errores (§7) devuelve exactamente eso.
+// - 👀 Otra forma que vas a ver — los mappings viejos: antes de los atajos
+//   (@GetMapping y familia, 2017), todo se escribía con la anotación madre:
+//       @RequestMapping(value = "/{id}", method = RequestMethod.GET)
+//   Es el equivalente exacto de @GetMapping("/{id}") — el código legacy
+//   está lleno de esa forma.
 ```
 
 El controller de la venta es mínimo — y esa mínima es una lección: el caso de uso solo pedía *registrar* ventas, así que hay **un** endpoint y ni uno más:

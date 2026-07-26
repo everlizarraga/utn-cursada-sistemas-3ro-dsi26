@@ -104,7 +104,16 @@ Los temas que la unidad dejó explícitamente para más adelante en la materia �
 **Qué hacer ahora, en este orden:**
 
 1. **Terminá los checkpoints pendientes** de los siete puntos — por escrito, en formato examen (la primera oración responde). Los que no salgan son tu lista de relectura; las dudas van al chat, y de ahí sale el complemento del recorrido con las respuestas modelo.
-2. **Ensuciate las manos con el proyecto:** levantalo, importá la colección de peticiones, jugá — creá productos, forzá los 404 y los 400, registrá una venta, corré los tests. Después tocá algo: agregá un log, cambiá una validación, rompé algo a propósito y mirá qué responde la API. Este contenido se termina de fijar tecleando.
+2. **Ensuciate las manos con el proyecto.** Primero, levantalo. Necesitás tener instalados un **JDK 21** y **Maven**; con eso, desde la **carpeta raíz** del proyecto (la que contiene el `pom.xml` padre):
+
+   ```bash
+   mvn clean install                      # 1º — construye los dos módulos, en orden
+   mvn spring-boot:run -pl sales-service  # 2º — levanta el servicio (-pl = "en este módulo")
+   ```
+
+   El primer comando hace falta porque es un proyecto multimódulo: construye la librería común y el servicio según el orden que el `pom.xml` padre define (alcanza con correrlo la primera vez, o tras cambios grandes). El segundo es el que arranca la aplicación: cuando la consola anuncie que Tomcat quedó escuchando en el puerto **8082**, está viva. Para frenarla: `Ctrl+C`. *(Alternativa con IDE: abrí la carpeta raíz en IntelliJ, dejá que importe el proyecto Maven, y ejecutá `SalesServiceApplication` con el botón de play.)*
+
+   Con el servicio corriendo: importá la colección de peticiones (está en la carpeta `postman/` del propio proyecto) y jugá — creá productos, forzá los 404 y los 400, registrá una venta. Corré también los tests: `mvn test` desde la raíz, o desde el IDE. Después tocá algo: agregá un log, cambiá una validación, rompé algo a propósito y mirá qué responde la API. Este contenido se termina de fijar tecleando.
 3. **Seguí el flujo normal de la unidad:** el apunte maestro (con la cobertura completa de siempre) y, detrás, el resumen. Si el recorrido hizo su trabajo, el maestro se va a sentir como volver a ver una película que ya entendiste — notando detalles nuevos, sin perderte en la trama.
 
 ---
