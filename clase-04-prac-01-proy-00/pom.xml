@@ -24,7 +24,8 @@
         <!-- CAMBIO 3: webmvc -> web (nombre clásico, como el profe). Lleva HTTP. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <!--<artifactId>spring-boot-starter-web</artifactId>-->
+            <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
 
         <dependency>
@@ -38,7 +39,8 @@
 
     <build>
         <plugins>
-            <plugin> <!-- ./mvnw -pl clase-04-prac-01-proy-00 spring-boot:run -->
+            <plugin>
+                <!-- ./mvnw -pl clase-04-prac-01-proy-00 spring-boot:run -->
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>

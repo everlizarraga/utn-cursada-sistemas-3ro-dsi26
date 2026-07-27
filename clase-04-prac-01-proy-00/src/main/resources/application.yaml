@@ -1,3 +1,6 @@
 spring:
   application:
-    name: clase-04-prac-01-proy-00
+    #name: clase-04-prac-01-proy-00
+    name: c04-veterinaria
+server:
+  port: 8083
