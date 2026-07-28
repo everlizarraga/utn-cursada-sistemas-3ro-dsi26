@@ -68,7 +68,33 @@ Ya los conocés del recorrido — refresco con los detalles que importan al tipe
 - Detalle de dedos: los accessors se llaman **como el componente, a secas** — `info.nombre()`, no `info.getNombre()`. (Jackson entiende ambos estilos; tus dedos van a tropezar con esto una semana.)
 - Un record ES el DTO ideal — por eso el proyecto de la clase los usa para toda su frontera de datos.
 
-👀 *Un DTO también puede ser una clase común con getters (Lombok incluido) — válido igual; el rol importa más que la sintaxis. Lo vas a ver así en muchos proyectos pre-records.*
+👀 **Otra forma que vas a ver — el DTO como clase común.** El equivalente exacto de un record DTO, en los dos sabores que circulan:
+
+```java
+// Sabor 1 — a mano (proyectos pre-records, o sin Lombok):
+public class TurnoRequest {
+    private String mascota;
+    private String dia;
+    private int duracionMinutos;
+
+    public TurnoRequest() { }                 // ← constructor vacío: Jackson lo NECESITA (abajo el porqué)
+
+    public String getMascota() { return mascota; }
+    public void setMascota(String mascota) { this.mascota = mascota; }
+    // ... y los getters/setters de los otros dos campos, igual
+}
+
+// Sabor 2 — con Lombok (el más común en proyectos reales):
+@Getter @Setter @NoArgsConstructor
+public class TurnoRequest {
+    private String mascota;
+    private String dia;
+    private int duracionMinutos;
+}
+// (también vas a ver @Data, el combo todo-en-uno de Lombok)
+```
+
+Mismo rol, más ceremonia — **y una trampa que el record te ahorraba sin avisarte**: para *deserializar* (`@RequestBody`), Jackson construye la clase con el **constructor vacío** y la va llenando con los **setters**. Si falta alguno de los dos, explota con un error críptico famoso: *"Cannot construct instance... no Creators, like default constructor, exist"*. El record no sufre esto porque Jackson usa su constructor canónico directo, sin setters ni ceremonia. (*Serializar* — la salida — es menos exigente: con getters alcanza.) Conclusión: mismo rol, pero el record es el DTO con menos superficie para errores — por eso la cátedra lo eligió. Si un día te toca un DTO-clase que "no deserializa", ya sabés los dos sospechosos.
 
 ## 🛠️ Parte 4: El canal 3 — POST + `@RequestBody`
 

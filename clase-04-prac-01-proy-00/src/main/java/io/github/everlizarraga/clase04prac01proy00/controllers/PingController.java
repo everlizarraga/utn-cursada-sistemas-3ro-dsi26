@@ -1,5 +1,6 @@
 package io.github.everlizarraga.clase04prac01proy00.controllers;
 
+import io.github.everlizarraga.clase04prac01proy00.dtos.InfoVeterinaria;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -78,6 +79,16 @@ public class PingController {
       @RequestParam(defaultValue = "5") Long limite
   ) {
     return "[Agenda] <dia:" + dia + "|especie:" + esp + "|limite:" + limite + ">";
+  }
+
+  // ETAPA 03 ::::::::::::::::::::::::::::::::::
+  @GetMapping("/info-completa")
+  public InfoVeterinaria infoCompleta() {
+    return new InfoVeterinaria(
+        "Veterinaria Firulais",
+        "Av. Corrientes 742",
+        true
+    );
   }
 
 }
