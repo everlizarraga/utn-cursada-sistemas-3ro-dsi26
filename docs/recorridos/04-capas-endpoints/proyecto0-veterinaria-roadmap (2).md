@@ -66,6 +66,7 @@
 | **0** | — (sondeo) | Proyecto Spring nuevo + **auto-test de reactivación**: un bean y una inyección, de memoria, sin mirar. Fluye → seguimos; oxidado → refresco exprés antes de construir encima. | 🟦 | 30' |
 | **1** | `@RestController` + `@GetMapping` | Tu primer endpoint. **Ver una request ENTRAR** a tu app (el espejo del proyecto-1) y a Tomcat quedarse vivo esperando más. Qué hace de verdad cada anotación. | 🟦 | 40' |
 | **2** | `@PathVariable` | Rutas con partes variables (`/mascotas/{id}`). Experimento: dos rutas que compiten. | 🟦 | 30' |
+| **2B** | `@RequestParam` *(extensión pedida)* | El segundo canal: query params (`?especie=perro`), opcionales y `defaultValue` — y la vacuna contra los gemelos falsos de JAX-RS (`@PathParam`, `@QueryParam`) que el autocompletado te quiere vender. | 🟦 | 30' |
 | **3** | `@RequestBody` + records | La frontera de datos: JSON que entra → DTO. Tu primer POST. Por qué la entidad no cruza. | 🟦 | 45' |
 | **4** | `@Service` | El orquestador en el medio: el controller deja de pensar. Acá tu DI del proyecto-1 se reusa tal cual — y comprobás que ya la sabías. | 🟦 | 40' |
 | **5** | `@Repository` + `Optional` end-to-end | La cadena completa de 4 capas, recorrida por una request de punta a punta. El dominio (dado) entra en escena con su regla. | 🟨 | 50' |
