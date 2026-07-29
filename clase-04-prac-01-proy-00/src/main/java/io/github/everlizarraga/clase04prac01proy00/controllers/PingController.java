@@ -1,10 +1,18 @@
 package io.github.everlizarraga.clase04prac01proy00.controllers;
 
 import io.github.everlizarraga.clase04prac01proy00.dtos.InfoVeterinaria;
+import io.github.everlizarraga.clase04prac01proy00.dtos.PresupuestoRequest;
+import io.github.everlizarraga.clase04prac01proy00.dtos.PresupuestoResponse;
+import io.github.everlizarraga.clase04prac01proy00.dtos.TurnoRequest;
+import io.github.everlizarraga.clase04prac01proy00.dtos.TurnoRequestClass;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController //@Component
@@ -90,5 +98,33 @@ public class PingController {
         true
     );
   }
+
+  @PostMapping("/turnos")
+  @ResponseStatus(HttpStatus.CREATED)
+  public String solicitarTurno(@RequestBody TurnoRequest request) {
+    return "Turno para " + request.mascota()
+        + " el " + request.dia()
+        + " (" + request.duracionMinutos() + " min)";
+  }
+
+  @PostMapping("/turnos-v2")
+  @ResponseStatus(HttpStatus.CREATED)
+  public String solicitarTurnoV2(@RequestBody TurnoRequestClass request) {
+    return "Turno para " + request.getMascota()
+        + " el " + request.getDia()
+        + " (" + request.getDuracionMinutos() + " min)";
+  }
+
+  @PostMapping("/presupuestos")
+  @ResponseStatus(HttpStatus.CREATED)
+  public PresupuestoResponse presupuesto(@RequestBody PresupuestoRequest request) {
+    return new PresupuestoResponse(
+        request.servicio(),
+        request.cantidad(),
+        request.precioUnitario(),
+        request.cantidad() * request.precioUnitario()
+    );
+  }
+
 
 }

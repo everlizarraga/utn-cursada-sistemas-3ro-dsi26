@@ -25,6 +25,7 @@
 3. **Sondeo de reactivación (E0):** lo tuyo del proyecto-1 (beans, DI, config) no se re-enseña — pero tampoco se asume a ciegas: se sondea en 20 minutos antes de construir encima.
 4. **Registro por etapa:** al cerrar cada etapa anotás en una línea qué te sorprendió o costó. Ese registro alimenta el complemento del recorrido al final.
 5. **Checkpoint doble:** preguntas de recall (¿qué hace X?) + preguntas estilo cátedra (decidí y justificá).
+6. **Nada se asume de ubicación:** cada etapa abre con un **árbol de archivos** (qué se crea, qué se toca, qué no) y cada bloque de código lleva su ruta 📁. Regla de traducción de raíz de packages declarada una sola vez (Etapa 3).
 
 ---
 

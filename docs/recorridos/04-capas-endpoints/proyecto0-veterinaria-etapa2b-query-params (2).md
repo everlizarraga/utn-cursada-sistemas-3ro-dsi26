@@ -34,7 +34,7 @@ Anatomía primero. En `GET /veterinaria/buscar?texto=firulais&limite=5`:
                               el QUERY
 ```
 
-La ruta dice *qué*; el query trae *cómo*: filtros, opciones, cantidades. Agregá a tu patio de experimentos:
+La ruta dice *qué*; el query trae *cómo*: filtros, opciones, cantidades. Agregá en 📁 `src/main/java/.../veterinaria/controllers/PingController.java` (tu patio de experimentos), dentro de la clase:
 
 ```java
 @GetMapping("/buscar")
