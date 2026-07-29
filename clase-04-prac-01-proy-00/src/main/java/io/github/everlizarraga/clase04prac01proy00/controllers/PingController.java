@@ -5,6 +5,8 @@ import io.github.everlizarraga.clase04prac01proy00.dtos.PresupuestoRequest;
 import io.github.everlizarraga.clase04prac01proy00.dtos.PresupuestoResponse;
 import io.github.everlizarraga.clase04prac01proy00.dtos.TurnoRequest;
 import io.github.everlizarraga.clase04prac01proy00.dtos.TurnoRequestClass;
+import io.github.everlizarraga.clase04prac01proy00.services.PresupuestoService;
+import io.github.everlizarraga.clase04prac01proy00.services.TurnoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +22,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class PingController {
 
   private static int contadorSaludo = 0;
+
+  private final PresupuestoService presupuestoService;
+  private final TurnoService turnoService;
+
+  public PingController(
+      PresupuestoService presupuestoService,
+      TurnoService turnoService
+  ) {
+    this.presupuestoService = presupuestoService;
+    this.turnoService = turnoService;
+  }
 
   @GetMapping({"", "/"})
   public String saludo() {
@@ -76,7 +89,7 @@ public class PingController {
       @RequestParam(name = "texto") String t,
       @RequestParam(name = "limit", defaultValue = "3") int limite, // defaultValue -> Siempre se necesita un valor
       @RequestParam(name = "algo", required = false) String x) { // required=false -> Puedo omitirlo (x=null)
-    if(x == null) x = "Ever";
+    //if(x == null) x = "Ever";
     return "Buscando: " + t + " (máximo " + limite + " resultados) - algo:" + x;
   }
 
@@ -102,9 +115,7 @@ public class PingController {
   @PostMapping("/turnos")
   @ResponseStatus(HttpStatus.CREATED)
   public String solicitarTurno(@RequestBody TurnoRequest request) {
-    return "Turno para " + request.mascota()
-        + " el " + request.dia()
-        + " (" + request.duracionMinutos() + " min)";
+    return this.turnoService.confirmar(request);
   }
 
   @PostMapping("/turnos-v2")
@@ -118,12 +129,7 @@ public class PingController {
   @PostMapping("/presupuestos")
   @ResponseStatus(HttpStatus.CREATED)
   public PresupuestoResponse presupuesto(@RequestBody PresupuestoRequest request) {
-    return new PresupuestoResponse(
-        request.servicio(),
-        request.cantidad(),
-        request.precioUnitario(),
-        request.cantidad() * request.precioUnitario()
-    );
+    return this.presupuestoService.cotizar(request);
   }
 
 
