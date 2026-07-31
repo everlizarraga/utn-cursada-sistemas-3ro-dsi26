@@ -88,7 +88,8 @@ public class PingController {
   public String buscar3(
       @RequestParam(name = "texto") String t,
       @RequestParam(name = "limit", defaultValue = "3") int limite, // defaultValue -> Siempre se necesita un valor
-      @RequestParam(name = "algo", required = false) String x) { // required=false -> Puedo omitirlo (x=null)
+      @RequestParam(name = "algo", required = false) String x // required=false -> Puedo omitirlo (x=null)
+  ) {
     //if(x == null) x = "Ever";
     return "Buscando: " + t + " (máximo " + limite + " resultados) - algo:" + x;
   }

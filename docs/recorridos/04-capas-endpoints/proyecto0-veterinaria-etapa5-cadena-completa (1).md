@@ -331,6 +331,27 @@ public class PropietarioServiceImpl implements PropietarioService {
 }
 ```
 
+## 💎 La perla del save que nadie captura
+
+Antes de seguir, mirá dos líneas del `create` con lupa: `propietarioRepository.save(propietario);` **retorna** un `Propietario`… que nadie captura. ¿Y entonces cómo llega el id al `toResponse` de la línea siguiente? Porque en Java, al pasar un objeto como parámetro, **lo que viaja es una copia de la referencia** — la dirección donde vive el objeto — no una copia del objeto:
+
+```
+   SERVICE                       REPO (save)              MEMORIA
+   propietario ─────┐            propietario ─────┐       ┌──────────────────┐
+                    └─────────────────────────────┴─────► │ Propietario      │
+                                                          │  id: null → 1 ✓  │
+   (misma flecha,               (setId(1) muta            │  nombre: "Ana"   │
+    misma dirección)             ESTE objeto)             └──────────────────┘
+```
+
+El `setId(...)` de adentro del repo muta **el único objeto que existe** — y tu variable del service apunta ahí mismo: cuando ejecuta `toResponse(propietario)`, el id ya está adentro. El objeto retornado y el que ya tenías **son el mismo** (`return propietario;` devuelve la misma referencia que entró).
+
+**Precisión de vocabulario** (fuente eterna de confusiones): Java es SIEMPRE **paso por valor** — solo que para objetos, *el valor que se copia ES la referencia*. La diferencia se ve en un solo caso: si el save **reasignara** su parámetro (`propietario = new Propietario(...)`), tu variable del service NO se enteraría — seguiría apuntando al objeto original. **Mutar el objeto compartido se ve desde afuera; reasignar la variable local, no.**
+
+**¿Y para qué existe el retorno, si se puede ignorar?** Es un contrato pensado para el futuro: hay implementaciones de repositorio (las de persistencia real, que llegan con la base de datos) donde el objeto guardado **no es la misma instancia** que entró — el repo devuelve una versión "administrada". La firma ya lo avisa: *"lo que vale de acá en adelante es lo que te devuelvo"*. La forma defensiva `propietario = propietarioRepository.save(propietario);` funciona idéntico hoy y sobrevive mejor al cambio de implementación; la del proyecto (ignorar el retorno, igual que la cátedra) es válida **con un supuesto adentro**: *"sé que MI implementación muta lo que le paso"*. Decisión con supuesto, no descuido — ahora la conocés.
+
+**Y guardá el mecanismo con las dos manos:** es exactamente el que va a hacer funcionar la cura del PUT en la Etapa 7 (mutar la instancia viva que todos comparten) — y el que explica su bug (una instancia nueva que nadie más conocía).
+
 ## 🚪 Parte 5: El controller real
 
 Archivo nuevo — los recursos de verdad no viven en el patio:
@@ -456,13 +477,14 @@ El service es donde está la carne — su `create` es tu primera orquestación *
 1. ¿Quién fabrica los ids, en qué método exacto, y por qué ahí y no en el service o el DTO?
 2. ¿Por qué `findById` devuelve `Optional` y no la entidad o null? ¿Qué te permitió encadenar en el service?
 3. Recitá el viaje del POST de la Parte 6: las cuatro capas, qué hace cada una, y las dos cosas que el service (y solo él) hizo.
+4. El service ignora el retorno del `save` y aun así el DTO sale con id. ¿Por qué funciona — y en qué escenario futuro dejaría de funcionar ignorarlo?
 
 *Decidí y justificá:*
-4. El dominio no tiene ni un import de Spring. ¿Qué compra esa pureza? Da dos escenarios concretos donde la pagarías caro si `Propietario` fuera un bean con anotaciones.
-5. El día que llegue la base de datos real: recorré TU árbol de archivos y marcá exactamente cuáles cambian y cuáles no. ¿Qué decisiones de hoy hicieron la lista de cambios tan corta?
-6. `findPropietarioOwner` recorre todo por cada mapeo. Un compañero propone "agregale `propietario` como atributo a Mascota y listo". Defendé el diseño actual — y concedé honestamente qué ganaría él. (Las dos posturas valen; lo evaluable es el porqué.)
-7. Borrás una mascota del `MascotaRepository`… ¿quedó viva en la lista de su propietario? Investigalo en TU código y decidí: ¿es un bug, o una decisión pendiente? ¿Qué haría falta para que el delete sea consistente? *(No lo arregles todavía — llega con el DELETE real de la Etapa 7. Pero pensalo hoy.)*
-8. Las tres deudas del traductor: listalas con el código HTTP que le corresponde a cada una y DÓNDE nace cada excepción. (Es, literalmente, el plano de la próxima etapa.)
+5. El dominio no tiene ni un import de Spring. ¿Qué compra esa pureza? Da dos escenarios concretos donde la pagarías caro si `Propietario` fuera un bean con anotaciones.
+6. El día que llegue la base de datos real: recorré TU árbol de archivos y marcá exactamente cuáles cambian y cuáles no. ¿Qué decisiones de hoy hicieron la lista de cambios tan corta?
+7. `findPropietarioOwner` recorre todo por cada mapeo. Un compañero propone "agregale `propietario` como atributo a Mascota y listo". Defendé el diseño actual — y concedé honestamente qué ganaría él. (Las dos posturas valen; lo evaluable es el porqué.)
+8. Borrás una mascota del `MascotaRepository`… ¿quedó viva en la lista de su propietario? Investigalo en TU código y decidí: ¿es un bug, o una decisión pendiente? ¿Qué haría falta para que el delete sea consistente? *(No lo arregles todavía — llega con el DELETE real de la Etapa 7. Pero pensalo hoy.)*
+9. Las tres deudas del traductor: listalas con el código HTTP que le corresponde a cada una y DÓNDE nace cada excepción. (Es, literalmente, el plano de la próxima etapa.)
 
 ## 📝 Registro de la etapa
 
