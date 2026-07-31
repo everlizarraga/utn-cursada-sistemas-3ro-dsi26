@@ -50,6 +50,8 @@ Qué acaba de pasar, pieza por pieza:
 
 👀 *Ya la conocés del recorrido, refresco de una línea: si el parámetro NO se llama como la variable de ruta, se lo indicás a la anotación — `@PathVariable("palabra") String otraCosa`. (P6 §6, comentario ⑤ — tu propio hallazgo.)*
 
+> 🎛️ **Ficha `@PathVariable`** *(retroactiva — esta etapa es anterior a la convención de fichas)*: `value`/`name` (alias — el nombre de la variable de ruta, el privilegiado) · `required` (default `true`). **No tiene `defaultValue` — y el faltante es semántica:** un hueco de ruta es obligatorio por construcción (sin segmento no hay match — no existe "segmento ausente", ergo no existe su default). Perla meta: **el set de atributos de una anotación te cuenta qué permite su canal** — compará: `@RequestParam` tiene defaultValue (canal con ausencias), este no (canal sin ausencias), `@RequestBody` solo required (todo o nada). ¿Y `required = false` acá, para qué? Un solo uso real, armado con las llaves de la gramática: un método mapeado a DOS rutas — `@GetMapping({"/eco", "/eco/{palabra}"})` — donde la variable puede legítimamente no estar cuando matchea la ruta corta (llega `null`, tu código decide). Solo reconocer.
+
 👀 *Otra que vas a ver — query params:* información en la URL **después de un `?`**: `/buscar?especie=perro&limite=10`. Eso NO es `@PathVariable` — se captura con `@RequestParam`. El proyecto de la clase no los usa (todo viaja en la ruta o en el body), así que acá tampoco: reconocelos cuando los veas — la ruta identifica *recursos*, el query suele traer *filtros y opciones*.
 
 ## 🛠️ Parte 3: Conversión de tipos

@@ -83,6 +83,8 @@ Y ahora sí, qué hace **de verdad** cada anotación:
 
 👀 *Otra forma que vas a ver:* en proyectos con páginas web renderizadas en el servidor existe `@Controller` (sin `Rest`): ahí los retornos no van al body sino que apuntan a vistas/templates. `@RestController` = `@Controller` + "todo al body". Si ves `@Controller` pelado en código ajeno, estás ante una app con vistas del lado del servidor.
 
+> 🎛️ **Fichas retroactivas** *(esta etapa es anterior a la convención de fichas — quedan acá para consulta):* **`@RestController`** — un solo atributo, `value` (nombre custom del bean; casi nunca se setea). **`@GetMapping` y todo su clan** (`@PostMapping`, `@PutMapping`, `@DeleteMapping`, `@PatchMapping`) — `value`/`path` (alias; `String[]`: una ruta, o varias con llaves `{}`) · `consumes` / `produces` (Content-Types que acepta / promete) · `params` / `headers` (solo reconocer); la ficha completa con ejemplos y combos vive en la **Etapa 3, Parte 4**. **`@RequestMapping`** — la anotación madre del clan: mismos atributos **más `method`** (el verbo, que los hijos traen fijo en el nombre); sobre una clase, define la ruta padre.
+
 ## 🧨 Parte 4: Experimento 1 — sacá `@RestController`
 
 Comentá la anotación `@RestController` (dejá `@GetMapping` intacto). **Predicción:** ¿la app va a arrancar? Y si arranca, ¿qué devuelve `/ping`?

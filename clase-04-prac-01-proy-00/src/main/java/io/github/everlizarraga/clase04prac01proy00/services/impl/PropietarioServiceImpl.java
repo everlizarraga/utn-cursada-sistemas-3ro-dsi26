@@ -2,6 +2,8 @@ package io.github.everlizarraga.clase04prac01proy00.services.impl;
 
 import io.github.everlizarraga.clase04prac01proy00.dtos.propietario.PropietarioCreateRequest;
 import io.github.everlizarraga.clase04prac01proy00.dtos.propietario.PropietarioResponse;
+import io.github.everlizarraga.clase04prac01proy00.exceptions.BusinessException;
+import io.github.everlizarraga.clase04prac01proy00.exceptions.ResourceNotFoundException;
 import io.github.everlizarraga.clase04prac01proy00.models.entities.Propietario;
 import io.github.everlizarraga.clase04prac01proy00.repositories.PropietarioRepository;
 import io.github.everlizarraga.clase04prac01proy00.services.PropietarioService;
@@ -37,7 +39,8 @@ public class PropietarioServiceImpl implements PropietarioService {
   @Override
   public PropietarioResponse create(PropietarioCreateRequest request) {
     if (request == null || request.nombre() == null || request.nombre().isBlank()) {
-      throw new IllegalArgumentException("El nombre es obligatorio");
+      //throw new IllegalArgumentException("El nombre es obligatorio");
+      throw new BusinessException("El nombre es obligatorio");
     }
     // ↑ Regla del FLUJO, en el service — Etapa 4. (Sigue saliendo como
     //   500 al mundo: deuda del traductor, la Etapa 6 se acerca.)
@@ -54,7 +57,9 @@ public class PropietarioServiceImpl implements PropietarioService {
   // ——— piezas privadas ———
 
   private Propietario getPropietarioOrThrow(Long id) {
-    return this.propietarioRepository.findById(id).orElseThrow();
+    return this.propietarioRepository.findById(id).orElseThrow(
+        () -> new ResourceNotFoundException("No se encontró propietario con id " + id)
+    );
     // ↑ Optional cerrando su ciclo: "dame el valor; si está vacío, lanzá".
     //   El orElseThrow() PELADO lanza NoSuchElementException — genérica,
     //   fea, y ya sabés qué le va a pasar al llegar arriba. Es A PROPÓSITO:

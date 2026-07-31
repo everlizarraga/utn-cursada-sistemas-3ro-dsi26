@@ -2,6 +2,8 @@ package io.github.everlizarraga.clase04prac01proy00.services.impl;
 
 import io.github.everlizarraga.clase04prac01proy00.dtos.mascota.MascotaCreateRequest;
 import io.github.everlizarraga.clase04prac01proy00.dtos.mascota.MascotaResponse;
+import io.github.everlizarraga.clase04prac01proy00.exceptions.BusinessException;
+import io.github.everlizarraga.clase04prac01proy00.exceptions.ResourceNotFoundException;
 import io.github.everlizarraga.clase04prac01proy00.models.entities.Mascota;
 import io.github.everlizarraga.clase04prac01proy00.models.entities.Propietario;
 import io.github.everlizarraga.clase04prac01proy00.repositories.MascotaRepository;
@@ -32,26 +34,40 @@ public class MascotaServiceImpl implements MascotaService {
     return this.mascotaRepository.findAll().stream()
         .map(this::toResponse)
         .toList();
-        //.collect(Collectors.toCollection(ArrayList::new));
+    //.collect(Collectors.toCollection(ArrayList::new));
   }
 
   @Override
   public MascotaResponse findById(Long id) {
     Mascota mascota = this.mascotaRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("No se encontró la mascota " + id));
+        .orElseThrow(() -> new ResourceNotFoundException("No se encontró la mascota " + id));
     return this.toResponse(mascota);
   }
 
   @Override
   public MascotaResponse create(MascotaCreateRequest request) {
+    // 0. Validar request
+    if (request == null || request.nombre() == null || request.nombre().isBlank()) {
+      throw new BusinessException("El nombre es obligatorio");
+    }
+    if (request.especie() == null || request.especie().isBlank()) {
+      throw new BusinessException("La especie es requerida");
+    }
+    if (request.propietarioId() == null) {
+      throw new BusinessException("El propietarioId es obligatorio");
+    }
     // 1. Verificar la existencia dle propietario
     Propietario propietario = this.propietarioRepository.findById(request.propietarioId())
-        .orElseThrow(() -> new RuntimeException("No se encontró el propietario " + request.propietarioId()));
+        .orElseThrow(() -> new ResourceNotFoundException("No se encontró el propietario " + request.propietarioId()));
     // 2. Crear la mascota
     Mascota mascota = new Mascota(null, request.nombre(), request.especie());
     // 3. Persistirla
     mascota = this.mascotaRepository.save(mascota);
-    propietario.agregarMascota(mascota);
+    try {
+      propietario.agregarMascota(mascota);
+    } catch (IllegalArgumentException ex) {
+      throw new BusinessException(ex.getMessage());
+    }
     this.propietarioRepository.save(propietario);
     // 4. Devolverla
     return this.toResponse(mascota, propietario);
@@ -76,7 +92,7 @@ public class MascotaServiceImpl implements MascotaService {
         .filter(p -> p.getMascotas().contains(mascota))
         .findFirst()
         .orElseThrow(() ->
-            new RuntimeException("No se encontró el propietario para la mascota " + mascota.getId())
+            new ResourceNotFoundException("No se encontró el propietario para la mascota " + mascota.getId())
         );
   }
 
