@@ -26,6 +26,7 @@
 4. **Registro por etapa:** al cerrar cada etapa anotás en una línea qué te sorprendió o costó. Ese registro alimenta el complemento del recorrido al final.
 5. **Checkpoint doble:** preguntas de recall (¿qué hace X?) + preguntas estilo cátedra (decidí y justificá).
 6. **Nada se asume de ubicación:** cada etapa abre con un **árbol de archivos** (qué se crea, qué se toca, qué no) y cada bloque de código lleva su ruta 📁. Regla de traducción de raíz de packages declarada una sola vez (Etapa 3).
+7. **Ficha 🎛️ por anotación nueva:** qué atributos acepta (los útiles + los de solo-reconocer, incluidos los homónimos traicioneros) **y cómo se combinan** — con la gramática completa (atributo privilegiado, nombrar-todos, llaves `{}` para arrays) declarada una vez en la Etapa 3.
 
 ---
 
@@ -71,7 +72,8 @@
 | **3** | `@RequestBody` + records | La frontera de datos: JSON que entra → DTO. Tu primer POST. Por qué la entidad no cruza. | 🟦 | 45' |
 | **4** | `@Service` | El orquestador en el medio: el controller deja de pensar. Acá tu DI del proyecto-1 se reusa tal cual — y comprobás que ya la sabías. | 🟦 | 40' |
 | **5** | `@Repository` + `Optional` end-to-end | La cadena completa de 4 capas, recorrida por una request de punta a punta. El dominio (dado) entra en escena con su regla. | 🟨 | 50' |
-| **6** | Excepciones propias + `@RestControllerAdvice` | Primero ROMPERLO: ver el 500 feo y **leer el stacktrace entero**. Después curarlo: 404/400 decentes con error uniforme. | 🟨 | 50' |
+| **6** | Excepciones propias + `@RestControllerAdvice` | El traductor: sistema completo primero (matriz + dos árboles), 404/400 decentes con error uniforme — y los dos efectos secundarios del catch-all, curados (logger + handler del JSON ilegible). | 🟨 | 55' |
+| **6B** | El logger *(extensión pedida)* | La caja negra del avión: niveles y umbral, fachada SLF4J (tu patrón interfaz/impl aplicado al logging), configuración por package en `application.yaml` — y el gancho directo al requisito "Logging SDK" del TP. | 🟦 | 25' |
 | **7** | `@PutMapping` + `@DeleteMapping` | Modificación y baja **canónicas** (id en la ruta) + `@ResponseStatus`. | 🟨 | 40' |
 | **8** | `@PatchMapping` *(extensión pedida)* | Actualización parcial y SU decisión de diseño (campo ausente = no tocar). | 🟨 | 40' |
 | **9** | Seeder + **examen** | `CommandLineRunner` (¡reuso directo del proyecto-1!) sembrando datos + la batería de 9 verificaciones, corrida completa. | 🟨 | 40' |

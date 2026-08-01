@@ -26,6 +26,7 @@ public class PropietarioServiceImpl implements PropietarioService {
 
   @Override
   public List<PropietarioResponse> findAll() {
+    //if (true) throw new RuntimeException("boom interno: db=10.0.0.5, password=secreta123");
     return propietarioRepository.findAll().stream()
         .map(this::toResponse)             // entidad → DTO, en masa
         .toList();                         // (this::toResponse = la
