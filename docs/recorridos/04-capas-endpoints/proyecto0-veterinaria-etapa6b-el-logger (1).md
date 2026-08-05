@@ -1,13 +1,10 @@
 # 🌱 Proyecto 0 (clase 04) — Etapa 6B: El logger — la caja negra del avión
-## ⚗️ VARIANTE PILOTO C: diagramas ASCII en `<pre>` con scroll horizontal
-
-> **Nota del piloto:** contenido idéntico a `etapa6b-el-logger.md` — solo cambia el envoltorio de los **diagramas** (etiqueta HTML `<pre>` con estilos fijos: sin partir líneas, scroll horizontal en pantallas chicas, fuente monoespaciada). Los bloques de **código Java/YAML** siguen en Markdown normal (conservan su resaltado). Compará en tus visualizadores contra las variantes A (ASCII en backticks) y B (Mermaid).
 
 > **⭐ Extensión pedida por vos** — el logger apareció en la Etapa 6 de prepo (lo necesitábamos para curar el 500 mudo) y quedó sin su explicación de ciudadano. Acá la tiene: qué es, cómo se gradúa, por qué está armado como está, y **dónde más te lo vas a topar** — que es en todos lados.
 >
-> **Objetivo:** entender el logging como sistema — niveles, origen, umbral configurable, fachada — para usarlo con criterio en cualquier contexto (services, frameworks, el TP).
+> **Objetivo:** entender el logging como sistema — niveles, origen, umbral configurable, fachada — para que cuando lo veas en cualquier contexto (services, frameworks, el TP) sepas leerlo y usarlo con criterio.
 >
-> **El momento clave:** cuando decodifiques una línea del arranque de Spring y te des cuenta de que **venís leyendo logs desde la Etapa 0 sin saberlo** — y cuando una línea en tu `application.yaml` haga aparecer y desaparecer mensajes a voluntad.
+> **El momento clave:** cuando decodifiques una línea del arranque de Spring y te des cuenta de que **venís leyendo logs desde la Etapa 0 sin saberlo** — y cuando un cambio de una línea en tu `application.yaml` haga aparecer y desaparecer mensajes a voluntad.
 >
 > **Pre-requisito:** Etapa 6 completa (el `log.error` del advice ya escrito).
 >
@@ -19,7 +16,7 @@
 
 A diferencia de todo lo que construiste hasta ahora, el logger **no pertenece a una capa: es transversal** — cualquier pieza puede tener el suyo:
 
-<pre style="white-space: pre; overflow-x: auto; font-family: monospace; font-size: 11px; line-height: 1.2;">
+```
    ┌──────────────────────────────────────────────────┐
    │  Controllers   Services   Repos   Advice ◄── el  │        DESTINOS
    │      │            │         │       │     tuyo   │     (configurables)
@@ -34,7 +31,7 @@ A diferencia de todo lo que construiste hasta ahora, el logger **no pertenece a 
    │  ...y TAMBIÉN el propio Spring: cada línea del   │
    │  arranque que leés desde la Etapa 0 sale de acá. │
    └──────────────────────────────────────────────────┘
-</pre>
+```
 
 **Archivos de esta etapa: ninguno nuevo.** Se relee tu advice, se agregan líneas temporales de experimento, y se toca (temporalmente) el `application.yaml`.
 
@@ -54,7 +51,7 @@ A diferencia de todo lo que construiste hasta ahora, el logger **no pertenece a 
 
 Los dos escriben texto. La diferencia es todo lo demás:
 
-<pre style="white-space: pre; overflow-x: auto; font-family: monospace; font-size: 11px; line-height: 1.2;">
+```
 System.out.println("no encontré el propietario")
    → un GRITO: sin categoría, sin origen, sin fecha, imposible de
      apagar sin borrar la línea, destino fijo (la consola y chau).
@@ -64,17 +61,17 @@ log.warn("No se encontró propietario con id {}", id)
      + timestamp + apagable/prendible por configuración + destino
      configurable (consola hoy; archivo o servicio externo mañana,
      SIN tocar el código).
-</pre>
+```
 
 Y acá el momento prometido — **venís leyendo logs desde la Etapa 0**. Decodificá una línea cualquiera de tu arranque:
 
-<pre style="white-space: pre; overflow-x: auto; font-family: monospace; font-size: 11px; line-height: 1.2;">
+```
 2026-08-01T10:15:32.123  INFO 12345 --- [main] c.p.v.VeterinariaApplication : Started VeterinariaApplication in 1.8 seconds
 └──────────┬───────────┘  └─┬─┘ └─┬─┘    └─┬──┘ └───────────┬──────────────┘   └──────────────┬─────────────────┘
        timestamp          NIVEL  proceso  hilo         ORIGEN (la clase                 el mensaje
                                                         que habló, con el
                                                         package abreviado)
-</pre>
+```
 
 Cada línea del arranque de Spring ES un log con esta anatomía — Spring usa el mismo sistema que vos. Ya eras lector; hoy te volvés escritor con criterio.
 
@@ -82,23 +79,23 @@ Cada línea del arranque de Spring ES un log con esta anatomía — Spring usa e
 
 Cinco niveles, de más grave a más charlatán, con su criterio:
 
-<pre style="white-space: pre; overflow-x: auto; font-family: monospace; font-size: 11px; line-height: 1.2;">
+```
   ERROR  ─  algo FALLÓ y alguien debería enterarse   ("error no previsto" — tu advice)
   WARN   ─  raro/sospechoso, pero seguimos           ("reintento 3 de la conexión...")
   INFO   ─  hito normal de la operación              ("app arrancada", "venta creada id=5")
   DEBUG  ─  detalle para diagnosticar                ("request recibida con params x=…")
   TRACE  ─  paso a paso microscópico                 ("entrando al método tal…")
-</pre>
+```
 
 Y la mecánica que lo vuelve poderoso — **el umbral**: configurás UN nivel, y se muestran ese **y los más graves**; los más charlatanes se descartan sin ejecutarse:
 
-<pre style="white-space: pre; overflow-x: auto; font-family: monospace; font-size: 11px; line-height: 1.2;">
+```
   umbral configurado:  INFO   (el default de Spring Boot)
                         │
   ERROR ✓  WARN ✓  INFO ✓ │ DEBUG ✗  TRACE ✗
                         │
         se muestran ◄───┴───► se descartan
-</pre>
+```
 
 Por eso en tu consola de todos los días ves `INFO` para arriba y jamás viste un `DEBUG` — no porque no existan (Spring emite miles), sino porque el umbral los filtra. **El código queda sembrado de mensajes de todos los niveles; la configuración decide cuáles viven.** Esa separación código/configuración es el superpoder: para diagnosticar un problema en producción no agregás prints y redeployás — **bajás el umbral** y los mensajes que siempre estuvieron ahí, aparecen.
 
@@ -106,7 +103,7 @@ Por eso en tu consola de todos los días ves `INFO` para arriba y jamás viste u
 
 ¿Por qué el import dice `org.slf4j` y no "el logger de Spring"? Porque **SLF4J no es un logger: es la interfaz** (fachada = cara visible). La implementación real que trabaja atrás es otra biblioteca (**Logback**, la que Boot trae puesta):
 
-<pre style="white-space: pre; overflow-x: auto; font-family: monospace; font-size: 11px; line-height: 1.2;">
+```
    TU CÓDIGO ──────► SLF4J (la FACHADA:            ┌──────────────────┐
    log.error(...)     interfaz, org.slf4j) ──────► │ Logback          │
                                                    │ (la IMPL que     │
@@ -115,16 +112,16 @@ Por eso en tu consola de todos los días ves `INFO` para arriba y jamás viste u
                                                      ▲ cambiable por otra
                                                        (Log4j2, etc.) SIN
                                                        tocar tu código
-</pre>
+```
 
-¿Te suena la jugada? **Es tu `PropietarioRepository` (interfaz) + `InMemoryPropietarioRepository` (impl)** — programar contra el contrato, poder cambiar la implementación sin tocar a los consumidores. El mismo patrón, aplicado por la industria entera al logging. Cuando en un proyecto ajeno veas `Log4j`, `Logback`, `java.util.logging`: son implementaciones distintas del mismo rol.
+¿Te suena la jugada? **Es tu `PropietarioRepository` (interfaz) + `InMemoryPropietarioRepository` (impl)** — programar contra el contrato, poder cambiar la implementación sin tocar a los consumidores. El mismo patrón, aplicado por la industria entera al logging. Cuando en un proyecto ajeno veas `Log4j`, `Logback`, `java.util.logging`: son implementaciones distintas del mismo rol — y si el proyecto usó la fachada, cambiarlas es configuración, no cirugía.
 
 ### 1d. Los contextos donde te lo vas a topar
 
 - **Tu advice (ya):** el `log.error` de lo imprevisto — la caja negra del accidente.
-- **Services, en el mundo real:** hitos de negocio en `INFO` ("venta creada id=5, total=187"), anomalías en `WARN`. Así se reconstruye qué pasó, cuando algo pasa.
+- **Services, en el mundo real:** hitos de negocio en `INFO` ("venta creada id=5, total=187"), anomalías en `WARN`. Los services de producción están sembrados de esto — es cómo se reconstruye qué pasó cuando algo pasa.
 - **Todo framework y biblioteca:** Spring, Jackson, los que vengan — todos emiten por este sistema; por eso bajar el umbral de un package ajeno te muestra sus tripas (Experimento 2).
-- **🎯 Tu TP, textual:** el enunciado de SmartLife exige *"manejo adecuado de errores mediante el Logging SDK"* — requisito **evaluable** de tu trabajo anual, y acabás de llegarle con el concepto masticado y un caso real implementado.
+- **🎯 Tu TP, textual:** el enunciado de SmartLife exige *"manejo adecuado de errores mediante el Logging SDK"* — o sea que esto no es cultura general: es **requisito evaluable** de tu trabajo práctico anual, y acabás de llegarle con el concepto masticado y un caso real implementado.
 
 ---
 
@@ -132,7 +129,7 @@ Por eso en tu consola de todos los días ves `INFO` para arriba y jamás viste u
 
 📍 Releé lo que ya escribiste, ahora con ojos nuevos:
 
-<pre style="white-space: pre; overflow-x: auto; font-family: monospace; font-size: 11px; line-height: 1.2;">
+```
 ┌─ 📁 controllers/advice/GlobalExceptionHandler.java  (ya existe — se RELEE) ─┐
 │                                                                            │
 │  private static final Logger log =                                         │
@@ -152,7 +149,7 @@ Por eso en tu consola de todos los días ves `INFO` para arriba y jamás viste u
 │                                 anti-patrón: pierde el stacktrace — solo   │
 │                                 imprime el nombre y el message.            │
 └────────────────────────────────────────────────────────────────────────────┘
-</pre>
+```
 
 Y el idioma que te falta conocer, porque está en TODOS lados — **los placeholders `{}`**:
 
@@ -164,7 +161,32 @@ log.info("Propietario {} creado con {} mascotas", id, cantidad);
 
 No es solo estética: si el nivel está apagado (un `debug` con umbral `INFO`), el mensaje **ni se arma** — la concatenación con `+` se ejecutaría igual y al vacío. El `{}` es el idiom estándar; concatenar en un log es olor a novato.
 
-👀 *Con Lombok existe el atajo `@Slf4j` sobre la clase: te genera el campo `log` solo. Válido y muy común — en el advice quedó explícito para que vieras la pieza; en tu TP, `@Slf4j` es lo esperable.*
+👀 **El atajo de Lombok — `@Slf4j`, mostrado.** Hace exactamente lo que venís viendo hacer a `@Getter` desde la Etapa 5: generar en compilación el código ceremonial que no ves. El antes y el después:
+
+```java
+// ANTES — a mano (lo que tenés hoy en tu advice):
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class GlobalExceptionHandler {
+    private static final Logger log =
+        LoggerFactory.getLogger(GlobalExceptionHandler.class);  // ← la línea ceremonial
+    // ...
+    // log.error("Error no previsto", ex);
+}
+
+// DESPUÉS — con Lombok (equivalente EXACTO):
+import lombok.extern.slf4j.Slf4j;              // ← ojo al import: lombok.extern.slf4j
+
+@Slf4j                                         // ← genera la línea ceremonial por vos:
+public class GlobalExceptionHandler {          //    un campo `log`, con ESTA clase
+    // ...                                     //    como origen — mismo nombre,
+    // log.error("Error no previsto", ex);     //    mismo comportamiento. El campo
+}                                              //    existe aunque no lo veas, igual
+                                               //    que los getters de @Getter.
+```
+
+Nada más cambia: el `log` se usa idéntico, el origen sigue siendo la clase anotada (así que el filtrado por package de los experimentos funciona igual), y los niveles y placeholders son los mismos. Es puro ahorro de ceremonia. En el advice quedó la versión explícita para que vieras la pieza; en tu TP, `@Slf4j` es lo esperable — y ahora sabés exactamente qué te está generando.
 
 ## 🧨 Parte 3: Experimento 1 — los niveles en vivo
 
@@ -238,8 +260,8 @@ El proyecto de la clase 04 no tiene logging propio (su advice es mudo — lo ver
 
 ## ▶️ Próximo paso
 
-Volvé al camino principal donde lo hayas dejado (Etapa 7 si venís en orden, o la que toque). Los tests para automatizar las verificaciones quedan estacionados donde acordamos.
+Volvé al camino principal donde lo hayas dejado (Etapa 7 si venís en orden, o la que toque). Los tests para automatizar la batería quedan estacionados donde acordamos — llegado el momento, se retoman sobre la API terminada.
 
 ---
 
-**FIN DE LA ETAPA 6B — variante C (ASCII en `<pre>`, piloto)**
+**FIN DE LA ETAPA 6B**

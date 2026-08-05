@@ -2,9 +2,11 @@ package io.github.everlizarraga.clase04prac01proy00.controllers.advice;
 
 import io.github.everlizarraga.clase04prac01proy00.dtos.error.ErrorResponse;
 import io.github.everlizarraga.clase04prac01proy00.exceptions.BusinessException;
+import io.github.everlizarraga.clase04prac01proy00.exceptions.ConflictException;
 import io.github.everlizarraga.clase04prac01proy00.exceptions.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -14,7 +16,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.Instant;
 
 @RestControllerAdvice                // "atrapo lo que ESCAPE de cualquier
-public class GlobalExceptionHandler {//  controller" — registro automático:
+public class GlobalExceptionHandler implements CommandLineRunner {//  controller" — registro automático:
   //  nadie lo conecta, ningún controller
   //  sabe que existe.
 
@@ -45,6 +47,11 @@ public class GlobalExceptionHandler {//  controller" — registro automático:
   //   Sin este handler se lo traga el catch-all y sale 500 — el defecto
   //   que descubriste. Verificación y porqué completo: Parte 9.
 
+  @ExceptionHandler(ConflictException.class)
+  public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex) {
+    return build(HttpStatus.CONFLICT, "conflict", ex.getMessage());
+  }
+
   @ExceptionHandler(Exception.class)                   // TODO lo no previsto:
   public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex) {
     log.error("Error no previsto", ex);              // ⭐ la verdad, a TU consola
@@ -56,4 +63,13 @@ public class GlobalExceptionHandler {//  controller" — registro automático:
     return ResponseEntity.status(status)
         .body(new ErrorResponse(error, message, Instant.now()));
   }   // ↑ la fábrica: status elegido + tu forma uniforme como body
+
+  @Override
+  public void run(String... args) throws Exception {
+    log.trace("nivel TRACE");
+    log.debug("nivel DEBUG");
+    log.info("nivel INFO");
+    log.warn("nivel WARN");
+    log.error("nivel ERROR");
+  }
 }

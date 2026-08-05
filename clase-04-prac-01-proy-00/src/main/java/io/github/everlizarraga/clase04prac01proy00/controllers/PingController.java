@@ -84,7 +84,7 @@ public class PingController {
     return "Buscando: " + t + " - Limit: " + limit;
   }
 
-  @GetMapping("/buscar3")
+  @GetMapping("/buscar3") // ?texto=...&limit=...&algo=...
   public String buscar3(
       @RequestParam(name = "texto") String t,
       @RequestParam(name = "limit", defaultValue = "3") int limite, // defaultValue -> Siempre se necesita un valor

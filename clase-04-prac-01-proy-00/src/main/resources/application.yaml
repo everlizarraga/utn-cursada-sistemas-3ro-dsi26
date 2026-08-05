@@ -4,3 +4,6 @@ spring:
     name: c04-veterinaria
 server:
   port: 8083
+logging:
+  level:
+    io.github.everlizarraga.clase04prac01proy00: DEBUG # ← TU raíz de packages (regla de traducción de la Etapa 3)

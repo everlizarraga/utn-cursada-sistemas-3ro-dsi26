@@ -4,11 +4,13 @@
 >
 > **Objetivo:** la actualización **parcial** — cambiar solo lo que el cliente mandó, dejar intacto lo que no.
 >
-> **Cómo trabaja esta etapa (v2):** el diseño completo primero — la semántica, la regla de implementación **y su límite conocido, anunciado de entrada** (nada de sorpresas a mitad de camino). Los experimentos después **verifican** lo que ya sabés, no te lo revelan.
+> **Cómo trabaja esta etapa:** el diseño completo primero — la semántica, la regla de implementación **y su límite conocido, anunciado de entrada** (nada de sorpresas a mitad de camino). Los experimentos después **verifican** lo que ya sabés, no te lo revelan.
 >
 > **Pre-requisito:** Etapa 7 completa (la mutación es la base de todo lo de hoy).
 >
 > **Tiempo estimado:** 40-50 minutos.
+>
+> *(v3 — ajuste de tu revisión: el 📍 ubica; el código se copia.)*
 
 ---
 
@@ -139,53 +141,62 @@ La regla que tu propio hallazgo de la Etapa 3 dejó lista para cobrar:
 
 > **En un DTO de PATCH, TODO campo es wrapper — jamás primitivo.** Vos lo demostraste: en tu stack, un `int` en un record **rechaza la ausencia** (el "required implícito" que descubriste — Jackson no puede meter null en un primitivo del constructor). Y la ausencia es exactamente lo que PATCH necesita permitir en cada campo. Un primitivo en un PatchRequest es una contradicción: *"campo opcional que no se puede omitir"*. Números en PATCH: `Integer`, `Double` — siempre.
 
+*(Ficha: `@PatchMapping` — clan de siempre, ficha 🎛️ de la Etapa 3, nada nuevo.)*
+
 ## 🛠️ Parte 3: La implementación — mutación condicional
 
-📍 **Dónde estamos:**
+📍 **Dónde va** — ubicación primero, código copiable después:
 
 ```
 Controllers ──► Services ◄━━ ACÁ ──► Repositories
                    │
                    ▼
                 Dominio (sus setters de la Etapa 7 hacen el trabajo)
+
+┌─ 📁 services/impl/PropietarioServiceImpl.java ────────────┐
+│  ··· findAll, findById, create, update, deleteById:       │
+│      sin cambios ···                                      │
+│                                                           │
+│  ╔═ MÉTODO NUEVO (agregar junto a update) ═══════╗        │
+│  ║ public PropietarioResponse patch(             ║        │
+│  ║         Long id,                              ║        │
+│  ║         PropietarioPatchRequest request)      ║        │
+│  ║ { ··· }                                       ║        │
+│  ╚════════════════════════════════════════════════╝       │
+│                                                           │
+│  ··· getPropietarioOrThrow, toResponse: sin cambios ···   │
+└───────────────────────────────────────────────────────────┘
+   (+ la firma en la interfaz PropietarioService)
 ```
 
-```
-┌─ 📁 services/impl/PropietarioServiceImpl.java ─────────────────┐
-│  ...métodos existentes: sin cambios...                         │
-│  ╔═══════════════════════════════════════════════════╗         │
-│  ║ @Override                                         ║ ◄──     │
-│  ║ public PropietarioResponse patch(Long id,         ║ método  │
-│  ║         PropietarioPatchRequest request) {        ║ NUEVO   │
-│  ║   if (request == null) {                          ║ entero  │
-│  ║     throw new BusinessException(                  ║         │
-│  ║         "El body es obligatorio");                ║         │
-│  ║   }                                               ║         │
-│  ║   Propietario existente =                         ║         │
-│  ║       getPropietarioOrThrow(id);  // viva, o 404  ║         │
-│  ║                                                   ║         │
-│  ║   if (request.nombre() != null) {      // ¿vino?  ║         │
-│  ║     if (request.nombre().isBlank()) {  // válido? ║         │
-│  ║       throw new BusinessException(                ║         │
-│  ║         "El nombre no puede quedar vacío");       ║         │
-│  ║     }                                             ║         │
-│  ║     existente.setNombre(request.nombre().trim()); ║         │
-│  ║   }                       // ¿no vino? ni se mira ║         │
-│  ║                                                   ║         │
-│  ║   if (request.telefono() != null) {               ║         │
-│  ║     existente.setTelefono(request.telefono());    ║         │
-│  ║   }                                               ║         │
-│  ║                                                   ║         │
-│  ║   propietarioRepository.save(existente);          ║         │
-│  ║   return toResponse(existente);                   ║         │
-│  ║ }                                                 ║         │
-│  ╚═══════════════════════════════════════════════════╝         │
-└────────────────────────────────────────────────────────────────┘
-   (+ la firma en la interfaz — y fijate: es el algoritmo de 1b,
-    línea por línea, con la validación ADENTRO del "¿vino?")
+El código completo del método — es el algoritmo de 1b, línea por línea:
+
+```java
+@Override
+public PropietarioResponse patch(Long id, PropietarioPatchRequest request) {
+    if (request == null) {
+        throw new BusinessException("El body es obligatorio");
+    }
+    Propietario existente = getPropietarioOrThrow(id);   // la instancia viva, o 404
+
+    if (request.nombre() != null) {                      // ¿vino nombre?
+        if (request.nombre().isBlank()) {                //   vino: entonces se valida...
+            throw new BusinessException("El nombre no puede quedar vacío");
+        }
+        existente.setNombre(request.nombre().trim());    //   ...y se toca.
+    }                                                    // ¿no vino? ni se mira.
+
+    if (request.telefono() != null) {                    // ídem, campo por campo
+        existente.setTelefono(request.telefono());
+    }
+
+    propietarioRepository.save(existente);
+    return toResponse(existente);
+}
+// ↑ Fijate la validación ADENTRO del "¿vino?": solo se valida lo que vino.
 ```
 
-Y el endpoint en el controller: `@PatchMapping("/{id}")` con la misma firma que tu PUT, delegando a `patch`. Una línea, como siempre.
+Y el endpoint en el controller: `@PatchMapping("/{id}")` con la misma firma que tu PUT, delegando a `patch`. Una línea, como siempre — a esta altura no necesitás que te la escriba.
 
 ## 🧨 Parte 4: Experimento 1 — la prueba de que no es un PUT disfrazado
 
@@ -263,4 +274,4 @@ Mirá tu rutina de cada arranque: la app nace **vacía** (la memoria efímera de
 
 ---
 
-**FIN DE LA ETAPA 8 — v2**
+**FIN DE LA ETAPA 8 — v3**

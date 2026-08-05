@@ -1,15 +1,19 @@
 package io.github.everlizarraga.clase04prac01proy00.models.entities;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-@Getter
+@Getter @Setter
 public class Propietario {
-  @Setter private Long id;
-  private final String nombre;
-  private final String telefono;
+  private Long id;
+  private String nombre;
+  private String telefono;
+  @Setter(AccessLevel.NONE)
   private final List<Mascota> mascotas;
 
   public Propietario(Long id, String nombre, String telefono) {
@@ -30,4 +34,7 @@ public class Propietario {
   //   genérico de Java (IllegalArgumentException): el dominio no conoce
   //   HTTP, ni Spring, ni excepciones "del sistema". Guardá el detalle:
   //   en la Etapa 6 alguien va a tener que TRADUCIR este grito.
+  public void eliminarMascota(Mascota mascota) {
+    this.mascotas.removeIf(m -> Objects.equals(m.getId(), mascota.getId()));
+  }
 }

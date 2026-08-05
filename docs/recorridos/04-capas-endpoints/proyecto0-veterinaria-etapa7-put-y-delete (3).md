@@ -2,11 +2,13 @@
 
 > **Objetivo:** los verbos que faltan — **PUT** (reemplazo completo, id en la ruta) y **DELETE** (con su 204) — y dos decisiones de diseño que venían esperando: cómo actualizar **sin romper relaciones**, y qué hacer con los **huérfanos** al borrar.
 >
-> **Cómo trabaja esta etapa (v2):** el principio central completo PRIMERO — con sus diagramas — y recién después el código, que escribís **una sola vez y en su forma definitiva**. La versión rota del PUT existe solo como demostración opcional de 5 minutos, no como código tuyo.
+> **Cómo trabaja esta etapa:** el principio central completo PRIMERO — con sus diagramas — y recién después el código, que escribís **una sola vez y en su forma definitiva**. La versión rota del PUT existe solo como demostración opcional de 5 minutos, no como código tuyo.
 >
 > **Pre-requisito:** Etapa 6 completa.
 >
 > **Tiempo estimado:** 55-65 minutos.
+>
+> *(v4 — suma **las cinco fases de la atomicidad** al principio completo: la metodología que nació de dos bugs reales de este mismo proyecto. Antes, v3: 📍 que ubican + ficha de `ConflictException`.)*
 
 ---
 
@@ -46,8 +48,8 @@ clase-04-prac-01-proy-00/
     │   ├── PropietarioController.java           (SE TOCA: +PUT, +DELETE)
     │   └── MascotaController.java               (SE TOCA — tu turno)
     ├── models/entities/
-    │   ├── Propietario.java                     (SE TOCA: 2 campos — Parte 2)
-    │   └── Mascota.java                         (se usa: sus setters esperaban este día)
+    │   ├── Propietario.java                     (SE TOCA: la mutabilidad tiene precio)
+    │   └── Mascota.java                         (se usa — sus setters esperaban este día)
     ├── dtos/
     │   ├── propietario/PropietarioUpdateRequest.java   ★ NUEVO
     │   └── mascota/MascotaUpdateRequest.java           ★ NUEVO — tu turno
@@ -56,7 +58,7 @@ clase-04-prac-01-proy-00/
 
 ## 🧭 Mapa de esta etapa
 
-1. **EL PRINCIPIO COMPLETO primero:** semántica de los verbos + mutación vs reconstrucción.
+1. **EL PRINCIPIO COMPLETO:** semántica de los verbos + mutación vs reconstrucción + las cinco fases.
 2. El precio en la entidad (el único toque al dominio del proyecto).
 3. Construcción: el PUT canónico de Propietario.
 4. Experimento opcional: ver la trampa con tus ojos (5 minutos, reversible).
@@ -126,7 +128,30 @@ CAMINO B — MUTACIÓN (el canónico — el de la cátedra, verificado en su có
 
 > **La regla, para siempre:** *reconstruir* una entidad con relaciones pierde todo lo que la instancia vieja "sabía" y el constructor nuevo no recibe. **Actualizar = recuperar la instancia viva y mutarla.**
 
-### 1c. Inventario exacto de la etapa
+### 1c. Las cinco fases — la atomicidad, a mano
+
+El segundo principio de la etapa — y este nació **acá mismo, de dos bugs reales de este proyecto** *(síntesis nuestra, no canon del profe: destila sabiduría estándar de ingeniería — fail-fast, atomicidad)*:
+
+> **Todo lo que puede FALLAR va ANTES de la primera MUTACIÓN.** Si una operación rechaza a mitad de camino, el sistema queda como si la request nunca hubiera existido. Un 400 que deja cambios a medias es corrupción con cara de rechazo.
+
+El lado B de la perla del save (Etapa 5) lo vuelve crítico: como las entidades son instancias VIVAS compartidas con el repo, **toda mutación es persistencia de facto** — con o sin `save()`. No hay deshacer. Por eso todo método de escritura se organiza así:
+
+```
+  FASE 1: VALIDAR     forma de la request       → puede fallar (400) · nada mutó
+  FASE 2: RESOLVER    buscar todo lo nombrado   → puede fallar (404) · nada mutó
+  FASE 3: INTENTAR    reglas de negocio         → puede fallar (400) · nada mutó (*)
+  FASE 4: MUTAR       setters, quitar, asociar  → NADA puede fallar ya
+  FASE 5: PERSISTIR   saves + responder
+
+  (*) el truco fino de la FASE 3: lo riesgoso se intenta en el orden que
+      deja el sistema íntegro si explota. Ejemplo estrella — una MUDANZA:
+      AGREGAR al destino primero (si la regla explota, el origen sigue
+      intacto) y QUITAR del origen después. Nunca al revés.
+```
+
+Vas a estructurar así cada método de escritura de hoy — y del capstone, y del TP. Y un puente al futuro: cuando llegue la base de datos real vas a conocer `@Transactional`, la anotación que *deshace todo solo* si algo falla a mitad de camino. La vas a entender en un segundo: **hace por magia lo que las fases hacen por disciplina.** Las fases no caducan con la BD — son el modo de pensar que las transacciones implementan.
+
+### 1d. Inventario exacto de la etapa
 
 | Pieza | Qué pasa |
 |---|---|
@@ -142,28 +167,29 @@ Con el mapa completo en la cabeza: a construir. Una sola vez, en su forma defini
 
 ## 🔧 Parte 2: El precio en la entidad
 
-📍 **Dónde estamos:**
+📍 **Dónde:** `models/entities/Propietario.java` — el único toque al dominio de todo el proyecto. Cambian **solo dos campos** (dejan de ser `final`); constructor, `agregarMascota` y la lista: intactos.
 
 ```
-Controllers ──► Services ──► Repositories
-                   │
-                   ▼
-                Dominio  ◄━━ ACÁ (único toque al dominio de todo el proyecto)
+┌─ 📁 models/entities/Propietario.java ──────────────────┐
+│  @Getter                                               │
+│  public class Propietario {                            │
+│      @Setter private Long id;                          │
+│  ╔═══════════════════════════════════╗                 │
+│  ║  · nombre    ← cambia su contrato ║ ◄── SOLO estos  │
+│  ║  · telefono  ← cambia su contrato ║     dos campos  │
+│  ╚═══════════════════════════════════╝                 │
+│      private final List<Mascota> mascotas = ...;       │
+│      ··· constructor: sin cambios ···                  │
+│      ··· agregarMascota: sin cambios ···               │
+│  }                                                     │
+└────────────────────────────────────────────────────────┘
 ```
 
-```
-┌─ 📁 models/entities/Propietario.java ──────────────────────────┐
-│  @Getter                                                       │
-│  public class Propietario {                                    │
-│      @Setter private Long id;                                  │
-│  ╔══════════════════════════════════════════════╗              │
-│  ║  @Setter private String nombre;              ║ ◄── eran     │
-│  ║  @Setter private String telefono;            ║     `final`: │
-│  ╚══════════════════════════════════════════════╝     cambian  │
-│      private final List<Mascota> mascotas = ...;      SOLO     │
-│      ...constructor y agregarMascota: sin cambios...  estos 2  │
-│  }                                                             │
-└────────────────────────────────────────────────────────────────┘
+Las dos líneas, listas para reemplazar a las versiones `final`:
+
+```java
+@Setter private String nombre;      // eran: private final String nombre;
+@Setter private String telefono;    //       private final String telefono;
 ```
 
 El trade-off, nombrado: la inmutabilidad era una garantía ("nadie cambia un propietario ya creado") y la entregás a cambio de poder mutar en el update — **la mutabilidad es el precio de la mutación**. Y el detalle fino: **la lista de mascotas NO paga ese precio** — sigue `final` y sin setter: nadie reemplaza la colección entera; se muta solo por los métodos del dominio (`agregarMascota`). Mutable no significa indefenso.
@@ -180,57 +206,76 @@ public record PropietarioUpdateRequest(String nombre, String telefono) { }
 // ↑ SIN id: viaja en la ruta. Solo lo editable — completo, porque es PUT.
 ```
 
-📍 El service — la mutación del Camino B, tal cual el diagrama:
+📍 **Dónde va el método del service** — ubicación primero, código copiable después:
 
 ```
 ┌─ 📁 services/impl/PropietarioServiceImpl.java ─────────────────┐
-│  ...métodos existentes: sin cambios...                         │
-│  ╔═══════════════════════════════════════════════════╗         │
-│  ║ @Override                                         ║ ◄──     │
-│  ║ public PropietarioResponse update(Long id,        ║ método  │
-│  ║         PropietarioUpdateRequest request) {       ║ NUEVO   │
-│  ║   if (request == null || request.nombre() == null ║ entero  │
-│  ║       || request.nombre().isBlank()) {            ║         │
-│  ║     throw new BusinessException(                  ║         │
-│  ║         "El nombre es obligatorio");              ║         │
-│  ║   }                                               ║         │
-│  ║   Propietario existente =                         ║         │
-│  ║       getPropietarioOrThrow(id);   // vivo, o 404 ║         │
-│  ║   existente.setNombre(request.nombre().trim());   ║         │
-│  ║   existente.setTelefono(request.telefono());      ║         │
-│  ║   propietarioRepository.save(existente);          ║         │
-│  ║   return toResponse(existente);                   ║         │
-│  ║ }                                                 ║         │
-│  ╚═══════════════════════════════════════════════════╝         │
+│  ··· findAll, findById, create: sin cambios ···                │
+│                                                                │
+│  ╔═ MÉTODO NUEVO (agregar después de create) ═══════╗          │
+│  ║ public PropietarioResponse update(               ║          │
+│  ║         Long id,                                 ║          │
+│  ║         PropietarioUpdateRequest request)        ║          │
+│  ║ { ··· }                                          ║          │
+│  ╚══════════════════════════════════════════════════╝          │
+│                                                                │
+│  ··· getPropietarioOrThrow, toResponse: sin cambios ···        │
 └────────────────────────────────────────────────────────────────┘
    (+ la firma en la interfaz PropietarioService, claro)
 ```
 
+El código completo del método — el Camino B del principio, tal cual el diagrama:
+
+```java
+@Override
+public PropietarioResponse update(Long id, PropietarioUpdateRequest request) {
+    if (request == null || request.nombre() == null || request.nombre().isBlank()) {
+        throw new BusinessException("El nombre es obligatorio");
+    }
+    // ↑ PUT exige el estado completo: el nombre es obligatorio acá,
+    //   igual que en el create.
+
+    Propietario existente = getPropietarioOrThrow(id);
+    // ↑ la instancia VIVA — con sus mascotas adentro. Si el id no
+    //   existe: 404 gratis (tu traductor de la Etapa 6, trabajando).
+
+    existente.setNombre(request.nombre().trim());     // muto TODO lo editable —
+    existente.setTelefono(request.telefono());        // reemplazo completo: PUT.
+
+    propietarioRepository.save(existente);
+    return toResponse(existente);
+}
+```
+
 **Predicción antes de correr:** el `save(existente)` — la entidad YA tiene id… ¿qué rama del save ejecuta? *(Recordá el save de la Etapa 5: sin id = alta con id nuevo; con id = saca la versión guardada y mete esta.)* ¿Y por qué las mascotas sobreviven?
 
-📍 El controller:
+📍 **Dónde va el endpoint** — al final del controller, junto a sus hermanos:
 
 ```
-┌─ 📁 controllers/PropietarioController.java ────────────────────┐
-│  ...GET, GET/{id}, POST: sin cambios...                        │
-│  ╔═══════════════════════════════════════════════════╗         │
-│  ║ @PutMapping("/{id}")                              ║ ◄──     │
-│  ║ public PropietarioResponse update(                ║ NUEVO   │
-│  ║         @PathVariable Long id,                    ║         │
-│  ║         @RequestBody PropietarioUpdateRequest r) {║         │
-│  ║   return propietarioService.update(id, r);        ║         │
-│  ║ }                                                 ║         │
-│  ╚═══════════════════════════════════════════════════╝         │
-└────────────────────────────────────────────────────────────────┘
-   El controller junta el QUIÉN (ruta) con el QUÉ (body) y delega.
-   Esta firma ES la forma canónica REST.
+┌─ 📁 controllers/PropietarioController.java ──────────┐
+│  ··· constructor, GET, GET/{id}, POST: sin cambios···│
+│  ╔═ MÉTODO NUEVO ═══════════════════════╗            │
+│  ║ public PropietarioResponse update(   ║            │
+│  ║     id de la ruta + body)  { ··· }   ║            │
+│  ╚══════════════════════════════════════╝            │
+└──────────────────────────────────────────────────────┘
 ```
 
-**Verificá la mutación completa** — la secuencia que importa, con Ana (id 1) teniendo 2 mascotas (`GET /propietarios/1` → `cantidadMascotas: 2` antes de empezar):
+```java
+@PutMapping("/{id}")
+public PropietarioResponse update(@PathVariable Long id,
+                                  @RequestBody PropietarioUpdateRequest request) {
+    return propietarioService.update(id, request);
+}
+// ↑ El controller junta el QUIÉN (ruta) con el QUÉ (body) y delega.
+//   Esta firma ES la forma canónica REST.
+```
+
+**Verificá la mutación completa** — con Ana (id 1) teniendo 2 mascotas (`GET /propietarios/1` → `cantidadMascotas: 2` antes de empezar):
 
 1. `PUT /veterinaria/propietarios/1` con `{"nombre":"Ana María","telefono":"11-9999"}` → **200**, datos nuevos.
 2. `GET /propietarios/1` → datos nuevos **Y `cantidadMascotas: 2` intacto** ✓ — la relación viajó porque es la misma instancia.
-3. `PUT /veterinaria/propietarios/99` → **404** con tu `ErrorResponse` — el traductor de la Etapa 6, trabajando gratis.
+3. `PUT /veterinaria/propietarios/99` → **404** con tu `ErrorResponse` — el traductor, trabajando gratis.
 
 ## 🧨 Parte 4: Experimento opcional — ver la trampa con tus ojos (5', reversible)
 
@@ -262,18 +307,24 @@ Probá ambas secuencias. Eso es **idempotencia**: repetir la operación deja el 
 
 ## 🗑️ Parte 6: DELETE — y la decisión de los huérfanos (tuya)
 
-📍 La mecánica es corta y va sin sorpresas:
+📍 **Dónde:** dos métodos nuevos — `deleteById` al final del service (+su firma en la interfaz), `delete` al final del controller. Sin sorpresas:
 
+```java
+// 📁 services/impl/PropietarioServiceImpl.java   (método NUEVO, al final)
+@Override
+public void deleteById(Long id) {
+    Propietario existente = getPropietarioOrThrow(id);   // existe, o 404
+    propietarioRepository.delete(existente);
+}
 ```
-┌─ service ──────────────────────────────┐  ┌─ controller ──────────────────────┐
-│ @Override                              │  │ @DeleteMapping("/{id}")           │
-│ public void deleteById(Long id) {      │  │ @ResponseStatus(                  │
-│   Propietario existente =              │  │     HttpStatus.NO_CONTENT)        │
-│       getPropietarioOrThrow(id);       │  │ public void delete(               │
-│   propietarioRepository               │  │     @PathVariable Long id) {      │
-│       .delete(existente);              │  │   propietarioService              │
-│ }                                      │  │       .deleteById(id);            │
-└────────────────────────────────────────┘  └───────────────────────────────────┘
+
+```java
+// 📁 controllers/PropietarioController.java   (método NUEVO, al final)
+@DeleteMapping("/{id}")
+@ResponseStatus(HttpStatus.NO_CONTENT)
+public void delete(@PathVariable Long id) {
+    propietarioService.deleteById(id);
+}
 ```
 
 *(👀 vas a ver APIs que devuelven 200 con el objeto borrado en el body — existe y es válido; el 204 + void es la convención dominante y la de la cátedra.)*
@@ -293,18 +344,29 @@ Verificá lo simple: `DELETE /propietarios/2` → **204** · `GET /propietarios/
    │                                     │
    ▼                                     ▼
    la mascota no existe                  el estado actual no permite
-   sin dueño: ciclos de                  la operación → excepción de
-   vida atados (¿te suena               negocio con mensaje claro
-   composición vs agregación?            (👀 la cátedra tiene una
-   Es ESO, decidido en código)           ConflictException → 409 para
-                                         exactamente esto — si elegís B,
-                                         es tu excusa para sumar la 4ª
-                                         excepción y su handler)
+   sin dueño: ciclos de                  la operación → una excepción
+   vida atados (¿te suena               de negocio… y acá entra en
+   composición vs agregación?            escena el 409 (ficha abajo 👇)
+   Es ESO, decidido en código)
 ```
+
+> 🎛️ **Ficha `ConflictException` / el 409 — presentación formal** *(hasta acá solo la habías PENSADO — checkpoint 8 de la Etapa 6 — sin que nadie te la explicara; eso se salda ahora)*. El **409 Conflict** completa tu triángulo de "culpa del cliente":
+>
+> | Código | Significa | Ejemplo tuyo |
+> |---|---|---|
+> | **400** | *lo que mandaste* está mal | nombre en blanco, 6ª mascota |
+> | **404** | *lo que nombraste* no existe | el propietario 99 |
+> | **409** | request bien formada, todo existe… pero **el ESTADO ACTUAL no permite la operación** | borrar un propietario *que tiene mascotas* |
+>
+> Casos clásicos del mundo real: identificador único ya tomado ("ese nombre de usuario ya existe"), borrar algo en uso, operar sobre un recurso cuyo estado lo prohíbe ("no se puede cancelar un pedido ya enviado"). Tu opción B es el ejemplo de manual. Si la elegís, el mecanismo lo conocés de memoria: excepción nueva en `exceptions/` (6 líneas, calco de `BusinessException`) + su `@ExceptionHandler` → `HttpStatus.CONFLICT`.
+>
+> **Y el hallazgo verificado en el repo de la cátedra:** su `ConflictException` existe (definida) y su advice la mapea a 409… pero **ningún service la lanza jamás** — es una excepción *huérfana*: infraestructura preparada sin caso de uso. O sea: si elegís la B, **tu proyecto le daría el primer uso real que la del profe nunca tuvo.** (Reaparece una sola vez más en tu camino: como candidata en la decisión D4 del capstone. Nunca como pieza obligatoria.)
 
 Elegí, implementá, justificá. Verificá que tu elección se comporte como la escribiste.
 
 ## ✍️ Parte 7: Tu turno — Mascota
+
+Estructurá cada método de escritura en **las cinco fases** (1c) — comentarios de fase incluidos. En la mudanza, el orden de la FASE 3 es el examen.
 
 **PUT de mascota** — con SU decisión: `MascotaUpdateRequest` lleva `nombre` y `especie` seguro… ¿y `propietarioId`? ¿Un PUT puede **mudar** la mascota de dueño? Decidilo y justificalo en comentario. *(Si sí: sacarla de la lista del dueño viejo + meterla en la del nuevo — donde la regla de las 5 puede explotar y tu traducción de la Etapa 6 tiene trabajo nuevo. Si no: defendé por qué "mudar" no es una edición sino otra operación.)* Mecánica: **mutación** — los setters que `Mascota` trae desde la Etapa 5 ("el PUT/PATCH los van a necesitar": promesa cumplida).
 
@@ -320,7 +382,7 @@ Elegí, implementá, justificá. Verificá que tu elección se comporte como la 
 - [ ] PUT por mutación en ambos recursos, relaciones sobrevivientes verificadas.
 - [ ] (Opcional pero recomendado) la trampa de la reconstrucción, vista y revertida.
 - [ ] Idempotencia vivida: triple-PUT vs triple-POST.
-- [ ] Huérfanos del DELETE: TU decisión implementada y justificada en comentario.
+- [ ] Huérfanos del DELETE: TU decisión implementada y justificada en comentario — con el 409 evaluado a conciencia.
 - [ ] DELETE de mascota consistente, verificado cruzado — y recién después, comparado con la cátedra.
 
 ## ✅ Checkpoint
@@ -328,13 +390,15 @@ Elegí, implementá, justificá. Verificá que tu elección se comporte como la 
 *Recall:*
 1. ¿Qué rama del `save` ejecuta un update, y por qué la mutación preserva las relaciones donde la reconstrucción las mata? (Dibujá el diagrama de las dos instancias de memoria.)
 2. ¿Qué es la idempotencia, cuáles de tus verbos la tienen, y a quién le resuelve qué problema concreto?
-3. ¿Por qué el 204 va con `void` y no con el objeto borrado?
+3. El triángulo 400 / 404 / 409 — definí cada uno en una línea y da un ejemplo TUYO de cada uno.
+4. Recitá las cinco fases y qué garantiza su orden. En una mudanza de dueño, ¿por qué se agrega al destino ANTES de quitar del origen — y qué desastre exacto produce el orden inverso?
+5. ¿Por qué el 204 va con `void` y no con el objeto borrado?
 
 *Decidí y justificá:*
-4. El id del PUT: ruta (tu diseño) vs body (el de la clase). Defendé ambos en dos renglones cada uno — y decí cuál elegirías en el TP.
-5. ¿Qué perdiste exactamente al sacar los `final` de la entidad, y por qué la lista de mascotas NO pagó ese precio?
-6. Defendé la opción de huérfanos que NO elegiste — su mejor versión. ¿Qué negocio la haría la correcta?
-7. Tu compañero implementó el PUT haciendo "DELETE + POST adentro del service, total da igual". Funciona… casi. Listale todo lo que rompió (pista: id nuevo, relaciones, idempotencia, códigos).
+6. El id del PUT: ruta (tu diseño) vs body (el de la clase). Defendé ambos en dos renglones cada uno — y decí cuál elegirías en el TP.
+7. ¿Qué perdiste exactamente al sacar los `final` de la entidad, y por qué la lista de mascotas NO pagó ese precio?
+8. Defendé la opción de huérfanos que NO elegiste — su mejor versión. ¿Qué negocio la haría la correcta? ¿Y qué código HTTP le corresponde a cada opción cuando rechaza o acepta?
+9. Tu compañero implementó el PUT haciendo "DELETE + POST adentro del service, total da igual". Funciona… casi. Listale todo lo que rompió (pista: id nuevo, relaciones, idempotencia, códigos — y ahora también: ¿qué fases viola?).
 
 ## 📝 Registro de la etapa
 
@@ -342,7 +406,7 @@ Tu línea: ¿qué te sorprendió, costó o hizo clic?
 
 ## 🔗 Conexión con la clase
 
-Abrí el `update` de `ProductoServiceImpl` en el `sales-service`: recuperar la instancia viva → `setTipo`/`setPrecioBase`/`setDescripcion` → save — **el Camino B, línea por línea** (con una validación extra de pertenencia que vale leer: chequea que el producto sea del comercio antes de tocar nada — ¿por qué?). Su `deleteById` ya lo comparaste al cerrar tu sentencia. La diferencia restante es la que sabés defender: su PUT lleva el id en el body; el tuyo, en la ruta. Releé del recorrido **P6 §6 el comentario ⑦** (la nota ⚠️ sobre el PUT del profe): ahora es tuyo con intereses.
+Abrí el `update` de `ProductoServiceImpl` en el `sales-service`: recuperar la instancia viva → `setTipo`/`setPrecioBase`/`setDescripcion` → save — **el Camino B, línea por línea** (con una validación extra de pertenencia que vale leer: chequea que el producto sea del comercio antes de tocar nada — ¿por qué?). Su `deleteById` ya lo comparaste al cerrar tu sentencia. Y su `ConflictException`: ahora sabés qué es, qué hace su advice con ella, y el secreto de que nadie la lanza. La diferencia restante del PUT es la que sabés defender: su id viaja en el body; el tuyo, en la ruta. Releé del recorrido **P6 §6 el comentario ⑦** (la nota ⚠️ sobre el PUT del profe): ahora es tuyo con intereses.
 
 ## ▶️ Próximo paso
 
@@ -350,4 +414,4 @@ Quedó picando la incomodidad de la Parte 5: *"yo solo quería cambiar el nombre
 
 ---
 
-**FIN DE LA ETAPA 7 — v2**
+**FIN DE LA ETAPA 7 — v3**

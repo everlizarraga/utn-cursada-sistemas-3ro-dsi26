@@ -2,7 +2,9 @@ package io.github.everlizarraga.clase04prac01proy00.services.impl;
 
 import io.github.everlizarraga.clase04prac01proy00.dtos.propietario.PropietarioCreateRequest;
 import io.github.everlizarraga.clase04prac01proy00.dtos.propietario.PropietarioResponse;
+import io.github.everlizarraga.clase04prac01proy00.dtos.propietario.PropietarioUpdateRequest;
 import io.github.everlizarraga.clase04prac01proy00.exceptions.BusinessException;
+import io.github.everlizarraga.clase04prac01proy00.exceptions.ConflictException;
 import io.github.everlizarraga.clase04prac01proy00.exceptions.ResourceNotFoundException;
 import io.github.everlizarraga.clase04prac01proy00.models.entities.Propietario;
 import io.github.everlizarraga.clase04prac01proy00.repositories.PropietarioRepository;
@@ -54,6 +56,33 @@ public class PropietarioServiceImpl implements PropietarioService {
     propietario = this.propietarioRepository.save(propietario);
     return this.toResponse(propietario);
   }
+
+  @Override
+  public PropietarioResponse update(Long id, PropietarioUpdateRequest request) {
+    if(request == null) {
+      throw new BusinessException("El body es obligatorio");
+    }
+    if(request.nombre() == null || request.nombre().isBlank()) {
+      throw new BusinessException("El nombre es obligatorio");
+    }
+
+    Propietario propietarioExistente = this.getPropietarioOrThrow(id);
+    propietarioExistente.setNombre(request.nombre());
+    propietarioExistente.setTelefono(request.telefono());
+    this.propietarioRepository.save(propietarioExistente);
+
+    return this.toResponse(propietarioExistente);
+  }
+
+  @Override
+  public void deleteById(Long id) {
+    Propietario propietario = this.getPropietarioOrThrow(id);
+    if(!propietario.getMascotas().isEmpty()) {
+      throw new ConflictException("Transferí o eliminá sus mascotas primero");
+    }
+    this.propietarioRepository.delete(propietario);
+  }
+
 
   // ——— piezas privadas ———
 
