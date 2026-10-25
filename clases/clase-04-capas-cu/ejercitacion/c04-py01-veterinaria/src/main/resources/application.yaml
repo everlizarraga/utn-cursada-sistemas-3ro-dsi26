@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: c04-py01-veterinaria
+server:
+  port: 8083
+logging:
+  level:
+    io.github.everlizarraga.c04py01veterinaria: DEBUG # ← TU raíz de packages (regla de traducción de la Etapa 3)

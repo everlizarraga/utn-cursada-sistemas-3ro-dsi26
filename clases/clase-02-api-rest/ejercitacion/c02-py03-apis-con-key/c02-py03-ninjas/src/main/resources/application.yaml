@@ -1,0 +1,3 @@
+spring:
+  application:
+    name: c02-py03-ninjas
