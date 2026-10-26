@@ -33,5 +33,11 @@ build/
 .vscode/
 
 ### Local ###
-_to_delete/
 .DS_Store
+
+### Secretos (API keys, tokens) ###
+# Cada módulo que use una key tiene su .env (no se sube)
+# y un .env.example con las variables sin valores (sí se sube).
+.env
+.env.*
+!.env.example

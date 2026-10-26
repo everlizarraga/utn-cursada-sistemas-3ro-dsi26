@@ -12,10 +12,10 @@
     </parent>
 
     <groupId>io.github.everlizarraga</groupId>
-    <artifactId>c02-py01-spring-basico</artifactId>
+    <artifactId>c02-py01-basico-paises</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
-    <name>c02-py01-spring-basico</name>
+    <name>c02-py01-basico-paises</name>
     <description>Práctica Proyecto 1 - Spring Incremental (consumo API países)</description>
 
     <properties>

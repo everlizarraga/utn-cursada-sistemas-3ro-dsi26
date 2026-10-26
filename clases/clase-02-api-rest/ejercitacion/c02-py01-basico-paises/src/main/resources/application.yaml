@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: c02-py01-basico-paises
+#  main:
+#    web-application-type: none
+paises:
+#  url: https://restcountries.com/v3.1
+  url: https://api.restcountries.com/countries/v5
+  api-key: TU_TOKEN
+  nombre-catalogo: Catálogo Mundial

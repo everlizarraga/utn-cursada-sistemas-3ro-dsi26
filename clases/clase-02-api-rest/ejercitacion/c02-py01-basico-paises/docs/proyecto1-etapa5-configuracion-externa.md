@@ -410,6 +410,8 @@ Ahora tenés **todas las piezas de Spring que necesitás** para hacer algo de ve
 
 ## ▶️ Próximo paso
 
+> **¿Querés profundizar antes de seguir?** La **Etapa 5b** (archivo `proyecto1-etapa5b-configuration-properties-a-fondo.md`) amplía esta etapa: qué pasa cuando el YAML y la clase no coinciden, cómo registrar muchas clases de properties, cómo hacerlas inmutables (`record`) y cómo poner valores por defecto. Es opcional: la Etapa 6 funciona sin ella.
+
 Cuando termines, seguí con la **Etapa 6** (archivo `proyecto1-etapa6-llamada-http.md`). Ahí vas a:
 - Agregar la dependencia web al `pom.xml` (y ver cómo cambia el arranque de la app).
 - Crear un cliente HTTP (`RestTemplate`) con `@Bean` (lo que aprendiste en la Etapa 4, ahora con algo real).
