@@ -662,7 +662,6 @@ Y una sola regla las ordena a todas: **registrada como clase de properties + un 
 
 Seguí con la **Etapa 6**. Vas a usar `PaisesProperties` para sacar la URL de la API (y, en la versión con token, la clave).
 
-- **`proyecto1-etapa6-llamada-http-v5.md`**: la versión vigente, para la API que hoy pide token.
-- **`proyecto1-etapa6-llamada-http.md`**: la versión original, para la API sin token de cuando se dictó la clase.
+- **`proyecto1-etapa6-llamada-http.md`**: escrita para la API actual, que pide token. Donde algo cambia sin token (como era la API cuando se dictó la clase), lo marca en cuadros 🔓.
 
 Si decidiste quedarte con `PaisesProperties` como `record`, cada atributo que la Etapa 6 agregue va como componente nuevo del record, y se lee sin "get": `properties.url()`, `properties.apiKey()`.

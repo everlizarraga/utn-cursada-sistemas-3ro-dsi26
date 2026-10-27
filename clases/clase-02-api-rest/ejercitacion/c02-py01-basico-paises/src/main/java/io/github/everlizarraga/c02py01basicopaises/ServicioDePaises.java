@@ -11,7 +11,5 @@ public class ServicioDePaises {
 
     public ServicioDePaises(CatalogoDePaises catalogo) {
         this.catalogo = catalogo;
-        int alAzar = this.catalogo.numeroDePaisAlAzar();
-        System.out.println(">>> País al azar elegido por el servicio: número " + alAzar);
     }
 }

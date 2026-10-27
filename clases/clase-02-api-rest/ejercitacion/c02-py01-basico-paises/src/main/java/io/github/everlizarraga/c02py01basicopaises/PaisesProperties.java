@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class PaisesProperties {
     String url;
     String nombreCatalogo;
+    String apiKey;
 }
 
 // MUTABLE ////////////////

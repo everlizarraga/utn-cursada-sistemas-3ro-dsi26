@@ -29,6 +29,11 @@ Cada clase tiene solo las carpetas que usa.
 
 1. `File → Open` sobre la carpeta raíz del repo.
 2. En la ventana de Maven, `+` (Add Maven Project) y elegir el `pom.xml` de cada proyecto que quieras usar. En los multimódulo, el `pom.xml` de la carpeta del proyecto (trae sus módulos).
+3. **Directorio de trabajo (hacelo una vez, apenas abras el repo).** Con el ▶, IntelliJ arranca cada app desde la carpeta que abriste (la raíz del repo), no desde la del proyecto. Las rutas relativas (un CSV, un `.env`) entonces no se encuentran: con `./mvnw` anda y con el ▶ no. Arreglo:
+   - *Run → Edit Configurations… → Edit configuration templates…* → **Spring Boot** (y también **Application**) → campo **Working directory** (si no está, en *Modify options*) → `$MODULE_WORKING_DIR$` → **Apply** → **OK**.
+   - `$MODULE_WORKING_DIR$` = "la carpeta del módulo que estás corriendo". La plantilla vale para las configuraciones **nuevas**; las que ya existían se arreglan una por una en esa misma ventana.
+   - Se comprueba en el log: la línea `Starting ... started by ... in <carpeta>` tiene que terminar en la carpeta del proyecto.
+   - Detalle completo (y el aviso de Lombok *"enable annotation processing"*): `clases/clase-01-intro-arquitectura/ejercitacion/c01-py00-hola-mundo/README.md`, sección 5.
 
 ## Correr desde consola
 
@@ -38,3 +43,7 @@ cd clases/clase-04-capas-cu/ejercitacion/c04-py01-veterinaria
 ```
 
 En un multimódulo, desde la carpeta del proyecto: `./mvnw -pl c02-py02-jsonph spring-boot:run`.
+
+## Tokens y API keys
+
+Ningún token real se commitea: ni en el código ni en el `application.yml`. Va en un `.env` al lado del `pom.xml` del proyecto (ignorado por git), con un `.env.example` sin valores que sí se sube. Cómo se lee desde Spring: `clases/clase-02-api-rest/ejercitacion/c02-py01-basico-paises/docs/proyecto1-etapa6b-proteger-el-token.md`.

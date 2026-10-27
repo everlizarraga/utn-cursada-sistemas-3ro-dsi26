@@ -1,4 +1,7 @@
 spring:
+  config:
+#    import: optional:file:.env[.properties]
+    import: file:.env[.properties]
   application:
     name: c02-py01-basico-paises
 #  main:
@@ -6,5 +9,5 @@ spring:
 paises:
 #  url: https://restcountries.com/v3.1
   url: https://api.restcountries.com/countries/v5
-  api-key: TU_TOKEN
+  api-key: ${RESTCOUNTRIES_API_KEY}
   nombre-catalogo: Catálogo Mundial
